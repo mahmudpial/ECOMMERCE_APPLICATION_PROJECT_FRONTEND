@@ -37,7 +37,8 @@ router.beforeEach((to, from) => {
 
   if (to.meta.requireAuth && !isAuthenticated) {
     return '/admin/login'
-  } else if (to.meta.requireGuest && isAuthenticated) {
+  }
+  if (to.meta.requireGuest && isAuthenticated) {
     return '/admin/dashboard'
   }
 
