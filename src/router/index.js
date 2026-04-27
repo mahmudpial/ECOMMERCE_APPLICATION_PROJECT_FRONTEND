@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/admin/Login.vue'
 import DashboardView from '@/views/admin/Dashboard.vue'
+import ProductIndex from '@/components/admin/ProductIndex.vue'
 import { useAuthStore } from '@/stores/auth'
 
 const routes = [
@@ -17,12 +18,14 @@ const routes = [
     meta: { requireAuth: true },
   },
   {
-    path: '/admin',
-    redirect: '/admin/dashboard',
+    path: '/admin/product-manage',
+    name: 'admin.product-manage',
+    component: ProductIndex,
+    meta: { requireAuth: true },
   },
   {
-    path: '/',
-    redirect: '/admin',
+    path: '/admin',
+    redirect: '/admin/dashboard',
   },
 ]
 
