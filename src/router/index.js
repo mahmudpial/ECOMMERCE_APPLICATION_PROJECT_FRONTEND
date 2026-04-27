@@ -31,7 +31,7 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, from) => {
+router.beforeEach((to, _from) => {
   const authStore = useAuthStore()
   const isAuthenticated = authStore.isAuthenticated
 
