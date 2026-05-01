@@ -306,7 +306,7 @@ const loadProducts = async () => {
         isLoading.value = false
 
     } catch (error) {
-        console.log('data error')
+        console.error('data error:', error)
     }
 
 }
