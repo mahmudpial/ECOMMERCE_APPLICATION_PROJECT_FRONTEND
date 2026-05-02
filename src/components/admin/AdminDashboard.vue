@@ -156,17 +156,21 @@ const formatDate = (date) => {
     })
 }
 
-// Load Dashboard Data
+// Load Dashboard Data from endpoints that exist in this backend.
 const loadDashboardData = async () => {
     loading.value = true
-    try {
-        // Load Statistics
-        const statsRes = await api.get('/admin/stats')
-        stats.value = statsRes.data
 
-        // Load Recent Orders
-        const ordersRes = await api.get('/admin/recent-orders')
-        recentOrders.value = ordersRes.data
+    try {
+        const productsRes = await api.get('products?page=1')
+        const productsData = productsRes.data
+
+        stats.value = {
+            ...stats.value,
+            total_products: productsData.total || productsData.data?.length || 0,
+        }
+
+        // This backend does not expose order summary endpoints yet.
+        recentOrders.value = []
     } catch (error) {
         console.error('Dashboard data load error:', error)
     } finally {

@@ -11,7 +11,7 @@
                 <div class="d-flex">
                     <span class="navbar-text text-white me-3">
                         <i class="fas fa-user me-1"></i>
-                        {{ authStore.user?.name || 'Amin' }}
+                        {{ authStore.displayName }}
                     </span>
                     <button @click="handleLogout" class="btn btn-outline-light btn-sm">
                         <i class="fas fa-sign-out-alt me-1"></i>
@@ -29,7 +29,7 @@
                         <i class="fas fa-tachometer-alt me-2">Dashboard</i>
 
                     </router-link>
-                    <router-link to="/admin/products" class="list-group-item list-group-item-action">
+                    <router-link to="/admin/product-manage" class="list-group-item list-group-item-action">
                         <i class="fas fa-box me-2">Product</i>
 
                     </router-link>

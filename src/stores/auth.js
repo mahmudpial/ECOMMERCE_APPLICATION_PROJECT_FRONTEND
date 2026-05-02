@@ -1,9 +1,36 @@
 import { defineStore } from 'pinia'
 import api from '@/utils/axios'
 
+const readStoredUser = () => {
+  const rawUser = localStorage.getItem('admin_user')
+
+  if (!rawUser) {
+    return null
+  }
+
+  try {
+    const parsedUser = JSON.parse(rawUser)
+    return parsedUser
+  } catch (_error) {
+    return { name: rawUser }
+  }
+}
+
+const getUserName = (user) => {
+  if (!user) {
+    return 'Admin'
+  }
+
+  if (typeof user === 'string') {
+    return user
+  }
+
+  return user.name || user.full_name || user.username || 'Admin'
+}
+
 export const useAuthStore = defineStore('auth', {
   state: () => ({
-    user: null,
+    user: readStoredUser(),
     token: localStorage.getItem('admin_token') || null,
     isAuthenticated: !!localStorage.getItem('admin_token'),
   }),
@@ -46,15 +73,17 @@ export const useAuthStore = defineStore('auth', {
     },
 
     loadUser() {
-      const userData = localStorage.getItem('admin_user')
-      if (userData) {
-        this.user = JSON.parse(userData)
-      }
+      this.user = readStoredUser()
+    },
+
+    getDisplayName() {
+      return getUserName(this.user)
     },
   },
 
   getters: {
     getUser: (state) => state.user,
     isLoggedIn: (state) => state.isAuthenticated,
+    displayName: (state) => getUserName(state.user),
   },
 })

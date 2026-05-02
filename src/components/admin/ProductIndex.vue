@@ -172,6 +172,9 @@
                                                         class="text-danger">*</span></label>
                                                 <select class="form-select">
                                                     <option value="">Select Brand</option>
+                                                    <option v-for="brand in brands" :key="brand.id" :value="brand.id">
+                                                        {{ brand.name }}
+                                                    </option>
                                                 </select>
                                             </div>
                                             <div class="col-md-4 mb-3">
@@ -179,6 +182,9 @@
                                                         class="text-danger">*</span></label>
                                                 <select class="form-select">
                                                     <option value="">Select Category</option>
+                                                    <option v-for="cat in categories" :key="cat.id" :value="cat.id">
+                                                        {{ cat.name }}
+                                                    </option>
                                                 </select>
                                             </div>
                                             <div class="col-md-4 mb-3">
@@ -266,11 +272,11 @@ import api from '@/utils/axios'
 import AdminMaster from '@/components/admin/AdminMaster.vue';
 
 
+
 const products = ref([])
 const brands = ref([])
 const categories = ref([])
 const isLoading = ref(false)
-
 const searchKeyword = ref('')
 const selectedBrand = ref('')
 const selectedCategory = ref('')
@@ -299,7 +305,7 @@ const loadProducts = async () => {
 
     try {
 
-        const response = await api.get('admin/products')
+        const response = await api.get('products')
 
         products.value = response.data.data
 
@@ -314,7 +320,7 @@ const loadProducts = async () => {
 const loadBrands = async () => {
     try {
         const response = await api.get('brands')
-        brands.value = response.data
+        brands.value = response.data.brands || response.data || []
     } catch (error) {
         console.error('Brands loading error:', error)
     }
