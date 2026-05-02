@@ -61,6 +61,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import api from '@/utils/axios'
 import AdminMaster from '@/components/admin/AdminMaster.vue';
 
 const categories = ref([])
@@ -69,8 +70,8 @@ const isLoading = ref(false)
 const loadCategories = async () => {
     isLoading.value = true
     try {
-        // Add API call here
-        categories.value = []
+        const response = await api.get('categories')
+        categories.value = response.data.data || []
     } catch (error) {
         console.error('Categories loading error:', error)
     } finally {

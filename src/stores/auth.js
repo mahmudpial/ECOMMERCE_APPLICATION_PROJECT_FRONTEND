@@ -58,18 +58,12 @@ export const useAuthStore = defineStore('auth', {
     },
 
     async logout() {
-      try {
-        await api.post('/logout')
-      } catch (error) {
-        console.error('Logout error:', error)
-        return false
-      } finally {
-        this.token = null
-        this.user = null
-        this.isAuthenticated = false
-        localStorage.removeItem('admin_token')
-        localStorage.removeItem('admin_user')
-      }
+      this.token = null
+      this.user = null
+      this.isAuthenticated = false
+      localStorage.removeItem('admin_token')
+      localStorage.removeItem('admin_user')
+      return true
     },
 
     loadUser() {

@@ -161,12 +161,12 @@ const loadDashboardData = async () => {
     loading.value = true
 
     try {
-        const productsRes = await api.get('products?page=1')
+        const productsRes = await api.get('admin/products?page=1')
         const productsData = productsRes.data
 
         stats.value = {
             ...stats.value,
-            total_products: productsData.total || productsData.data?.length || 0,
+            total_products: productsData.meta?.total || productsData.total || productsData.data?.length || 0,
         }
 
         // This backend does not expose order summary endpoints yet.

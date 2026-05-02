@@ -21,39 +21,45 @@
             </div>
         </nav>
 
-        <div class="row g-0">
+        <div class="row g-0 flex-column flex-md-row">
 
-            <div class="col-md-2 bg-light vh-100 p-0">
+            <div class="col-12 col-md-2 bg-light admin-sidebar p-0 border-end">
                 <div class="list-group list-group-flush">
-                    <router-link to="/admin/dashboard" class="list-group-item list-group-item-action">
-                        <i class="fas fa-tachometer-alt me-2">Dashboard</i>
+                    <router-link to="/admin/dashboard" class="list-group-item list-group-item-action py-3">
+                        <i class="fas fa-tachometer-alt me-2"></i>
+                        Dashboard
 
                     </router-link>
-                    <router-link to="/admin/product-manage" class="list-group-item list-group-item-action">
-                        <i class="fas fa-box me-2">Product</i>
+                    <router-link to="/admin/product-manage" class="list-group-item list-group-item-action py-3">
+                        <i class="fas fa-box me-2"></i>
+                        Product
 
                     </router-link>
-                    <router-link to="/admin/categories" class="list-group-item list-group-item-action">
-                        <i class="fas fa-tags me-2">Category</i>
+                    <router-link to="/admin/categories" class="list-group-item list-group-item-action py-3">
+                        <i class="fas fa-tags me-2"></i>
+                        Category
 
                     </router-link>
-                    <router-link to="/admin/brands" class="list-group-item list-group-item-action">
-                        <i class="fas fa-trademark me-2">Brand</i>
+                    <router-link to="/admin/brands" class="list-group-item list-group-item-action py-3">
+                        <i class="fas fa-trademark me-2"></i>
+                        Brand
 
                     </router-link>
-                    <router-link to="/admin/orders" class="list-group-item list-group-item-action">
-                        <i class="fas fa-shopping-cart me-2">Order</i>
+                    <router-link to="/admin/orders" class="list-group-item list-group-item-action py-3">
+                        <i class="fas fa-shopping-cart me-2"></i>
+                        Order
 
                     </router-link>
-                    <router-link to="/admin/users" class="list-group-item list-group-item-action">
-                        <i class="fas fa-users me-2">User</i>
+                    <router-link to="/admin/users" class="list-group-item list-group-item-action py-3">
+                        <i class="fas fa-users me-2"></i>
+                        User
 
                     </router-link>
                 </div>
             </div>
 
 
-            <div class="col-md-10 p-4">
+            <div class="col-12 col-md-10 p-3 p-md-4">
                 <slot></slot>
             </div>
         </div>
@@ -73,3 +79,15 @@ const handleLogout = async () => {
     router.push('/admin/login')
 }
 </script>
+
+<style scoped>
+.admin-sidebar {
+    min-height: auto;
+}
+
+@media (min-width: 768px) {
+    .admin-sidebar {
+        min-height: 100vh;
+    }
+}
+</style>

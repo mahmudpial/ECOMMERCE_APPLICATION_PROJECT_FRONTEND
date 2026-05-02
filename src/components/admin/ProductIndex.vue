@@ -61,77 +61,94 @@
                         <p class="mt-2">Loading...</p>
                     </div>
 
-
-                    <!-- Table - Show when products exist -->
-                    <table class="table table-hover mb-0">
-                        <thead class="table-light">
-                            <tr>
-                                <th style="width: 50px;">ID</th>
-                                <th style="width: 80px;">Image</th>
-                                <th>Product Name</th>
-                                <th>Brand</th>
-                                <th>Category</th>
-                                <th>Price</th>
-                                <th>Stock</th>
-                                <th>Status</th>
-                                <th style="width: 150px;">Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-
-                            <!-- Product Row - Dynamic data will go here -->
-                            <tr v-for="product in products" :key="product.id">
-                                <td>{{ product.id }}</td>
-                                <td>
-                                    <img src="" width="50" height="50" class="rounded" style="object-fit: cover;">
-                                </td>
-                                <td>{{ product.name }}</td>
-                                <td>{{ product.brand.name }}</td>
-                                <td>{{ product.category.name }}</td>
-                                <td>৳ {{ product.price }}</td>
-                                <td>
-                                    <span class="badge bg-success">{{ product.stock }}</span>
-                                </td>
-                                <td>
-                                    <span class="badge bg-success">{{ product.status }}</span>
-                                </td>
-                                <td>
-                                    <button class="btn btn-sm btn-info me-1">
-                                        <i class="fas fa-edit"></i>
-                                    </button>
-                                    <button class="btn btn-sm btn-danger">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </td>
-                            </tr>
-
-
-                            <!-- No Data Row -->
-                            <tr>
-                                <td colspan="9" class="text-center text-muted py-4">
-                                    <i class="fas fa-database fa-2x mb-2 d-block"></i>
-                                    No products found
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
+                    <div class="table-responsive">
+                        <table v-if="products.length > 0 && !isLoading" class="table table-hover mb-0 align-middle product-table">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 50px;">ID</th>
+                                    <th style="width: 80px;">Image</th>
+                                    <th>Product Name</th>
+                                    <th>Brand</th>
+                                    <th>Category</th>
+                                    <th>Price</th>
+                                    <th>Stock</th>
+                                    <th>Status</th>
+                                    <th style="width: 150px;">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr v-for="product in products" :key="product.id">
+                                    <td>{{ product.id }}</td>
+                                    <td>
+                                        <template v-if="getProductImage(product)">
+                                            <img
+                                                :src="getProductImage(product)"
+                                                :alt="product.name"
+                                                width="50"
+                                                height="50"
+                                                class="rounded object-fit-cover product-image"
+                                            >
+                                        </template>
+                                        <div v-else class="product-image-placeholder">
+                                            No image
+                                        </div>
+                                    </td>
+                                    <td>{{ product.name }}</td>
+                                    <td>{{ product.brand?.name || '-' }}</td>
+                                    <td>{{ product.category?.name || '-' }}</td>
+                                    <td>৳ {{ product.price }}</td>
+                                    <td>
+                                        <span class="badge bg-success">{{ product.stock }}</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">{{ product.status }}</span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-info me-1">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-danger">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div v-if="!isLoading && products.length === 0" class="text-center text-muted py-4">
+                            <i class="fas fa-database fa-2x mb-2 d-block"></i>
+                            No products found
+                        </div>
+                    </div>
 
 
                     <!-- Pagination -->
-                    <div class="d-flex justify-content-between align-items-center mt-4">
+                    <div v-if="pagination.last_page > 1" class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-3 mt-4">
                         <div class="text-muted">
-                            Showing 1 to 10 of 25 products
+                            Showing {{ pagination.from || 0 }} to {{ pagination.to || 0 }} of {{ pagination.total || 0 }} products
                         </div>
                         <nav>
                             <ul class="pagination mb-0">
-                                <li class="page-item disabled">
-                                    <a class="page-link" href="#">Previous</a>
+                                <li class="page-item" :class="{ disabled: pagination.current_page <= 1 }">
+                                    <button class="page-link" type="button" @click="goToPage(pagination.current_page - 1)"
+                                        :disabled="pagination.current_page <= 1">
+                                        Previous
+                                    </button>
                                 </li>
-                                <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                                <li class="page-item"><a class="page-link" href="#">3</a></li>
-                                <li class="page-item">
-                                    <a class="page-link" href="#">Next</a>
+                                <li
+                                    v-for="page in pagination.last_page"
+                                    :key="page"
+                                    class="page-item"
+                                    :class="{ active: page === pagination.current_page }"
+                                >
+                                    <button class="page-link" type="button" @click="goToPage(page)">
+                                        {{ page }}
+                                    </button>
+                                </li>
+                                <li class="page-item" :class="{ disabled: pagination.current_page >= pagination.last_page }">
+                                    <button class="page-link" type="button" @click="goToPage(pagination.current_page + 1)"
+                                        :disabled="pagination.current_page >= pagination.last_page">
+                                        Next
+                                    </button>
                                 </li>
                             </ul>
                         </nav>
@@ -280,47 +297,76 @@ const isLoading = ref(false)
 const searchKeyword = ref('')
 const selectedBrand = ref('')
 const selectedCategory = ref('')
+const pagination = ref({
+    current_page: 1,
+    last_page: 1,
+    from: 0,
+    to: 0,
+    total: 0,
+    per_page: 20,
+})
 
+const buildProductParams = (page = 1) => {
+    const params = { page }
 
-const searchProducts = async () => {
+    if (searchKeyword.value) params.search = searchKeyword.value
+    if (selectedBrand.value) params.brand_id = selectedBrand.value
+    if (selectedCategory.value) params.category_id = selectedCategory.value
+
+    return params
+}
+
+const getProductImage = (product) => {
+    if (Array.isArray(product.images) && product.images.length > 0) {
+        return product.images[0]
+    }
+
+    if (typeof product.images === 'string' && product.images.trim()) {
+        return product.images
+    }
+
+    return ''
+}
+
+const loadProducts = async (page = 1) => {
     isLoading.value = true
     try {
-        let url = `products?page=1`
-        if (searchKeyword.value) url += `&search=${searchKeyword.value}`
-        if (selectedBrand.value) url += `&brand_id=${selectedBrand.value}`
-        if (selectedCategory.value) url += `&category_id=${selectedCategory.value}`
+        const response = await api.get('admin/products', {
+            params: buildProductParams(page),
+        })
 
-        const response = await api.get(url)
-        products.value = response.data.data || response.data
+        products.value = response.data.data || []
+        pagination.value = {
+            current_page: response.data.meta?.current_page || page,
+            last_page: response.data.meta?.last_page || 1,
+            from: response.data.meta?.from || 0,
+            to: response.data.meta?.to || products.value.length,
+            total: response.data.meta?.total || products.value.length,
+            per_page: response.data.meta?.per_page || 20,
+        }
     } catch (error) {
-        console.error('Search error:', error)
+        console.error('data error:', error)
     } finally {
         isLoading.value = false
     }
 }
 
+const searchProducts = async () => {
+    await loadProducts(1)
+}
 
-const loadProducts = async () => {
-    isLoading.value = true
-
-    try {
-
-        const response = await api.get('products')
-
-        products.value = response.data.data
-
-        isLoading.value = false
-
-    } catch (error) {
-        console.error('data error:', error)
+const goToPage = async (page) => {
+    if (page < 1 || page > pagination.value.last_page || page === pagination.value.current_page) {
+        return
     }
 
+    await loadProducts(page)
 }
 
 const loadBrands = async () => {
     try {
         const response = await api.get('brands')
-        brands.value = response.data.brands || response.data || []
+        brands.value = response.data.data || response.data.brands || []
     } catch (error) {
         console.error('Brands loading error:', error)
     }
@@ -329,7 +375,7 @@ const loadBrands = async () => {
 const loadCategories = async () => {
     try {
         const response = await api.get('categories')
-        categories.value = response.data
+        categories.value = response.data.data || []
     } catch (error) {
         console.error('Categories loading error:', error)
     }
@@ -343,3 +389,28 @@ onMounted(() => {
 
 
 </script>
+
+<style scoped>
+.product-table {
+    min-width: 900px;
+}
+
+.product-image {
+    object-fit: cover;
+}
+
+.product-image-placeholder {
+    width: 50px;
+    height: 50px;
+    border-radius: 0.375rem;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.7rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0.25rem;
+}
+</style>

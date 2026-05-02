@@ -61,6 +61,7 @@
 
 <script setup>
 import { ref, onMounted } from 'vue';
+import api from '@/utils/axios'
 import AdminMaster from '@/components/admin/AdminMaster.vue';
 
 const brands = ref([])
@@ -69,8 +70,8 @@ const isLoading = ref(false)
 const loadBrands = async () => {
     isLoading.value = true
     try {
-        // Add API call here
-        brands.value = []
+        const response = await api.get('brands')
+        brands.value = response.data.data || []
     } catch (error) {
         console.error('Brands loading error:', error)
     } finally {
