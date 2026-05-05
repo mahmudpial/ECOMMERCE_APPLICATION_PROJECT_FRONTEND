@@ -1,14 +1,8 @@
 <template>
-    <AdminMaster>
-        <AdminDashboard />
-    </AdminMaster>
-
+    <AdminDashboard />
 </template>
 
-
 <script setup>
-defineOptions({ name: 'DashboardView' })
-import AdminMaster from '@/components/admin/AdminMaster.vue';
+defineOptions({ name: 'DashboardView' });
 import AdminDashboard from '@/components/admin/AdminDashboard.vue';
-
 </script>

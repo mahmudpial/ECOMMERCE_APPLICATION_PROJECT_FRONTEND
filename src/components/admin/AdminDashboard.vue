@@ -1,103 +1,58 @@
 <template>
-    <div>
-        <h2 class="mb-4">
-            <i class="fas fa-tachometer-alt me-2 text-primary"></i>
-            Dashboard
-        </h2>
+    <div class="dashboard">
 
-        <div class="row">
-            <div class="col-md-3 mb-4">
-                <div class="card bg-primary text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title">Total Orders</h6>
-                                <h2 class="mb-0">{{ stats.total_orders || 0 }}</h2>
-                            </div>
-                            <i class="fas fa-shopping-cart fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
+        <!-- ===== HEADER ===== -->
+        <div class="header">
+            <div>
+                <h1>Dashboard</h1>
+                <p>Overview of your store performance</p>
             </div>
-
-            <div class="col-md-3 mb-4">
-                <div class="card bg-success text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title">Total Users</h6>
-                                <h2 class="mb-0">{{ stats.total_users || 0 }}</h2>
-                            </div>
-                            <i class="fas fa-users fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-4">
-                <div class="card bg-info text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title">Total Products</h6>
-                                <h2 class="mb-0">{{ stats.total_products || 0 }}</h2>
-                            </div>
-                            <i class="fas fa-box fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="col-md-3 mb-4">
-                <div class="card bg-warning text-white">
-                    <div class="card-body">
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <h6 class="card-title">Total Revenue</h6>
-                                <h2 class="mb-0">৳{{ stats.total_revenue || 0 }}</h2>
-                            </div>
-                            <i class="fas fa-chart-line fa-2x opacity-50"></i>
-                        </div>
-                    </div>
-                </div>
+            <div class="date">
+                {{ today }}
             </div>
         </div>
 
-        <div class="card mt-3">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">
-                    <i class="fas fa-clock me-2 text-primary"></i>
-                    Recent Orders
-                </h5>
+        <!-- ===== STATS ===== -->
+        <div class="stats">
+            <div v-for="card in statCards" :key="card.label" class="stat-card">
+                <div class="stat-top">
+                    <span>{{ card.label }}</span>
+                    <i :class="card.icon"></i>
+                </div>
+                <h2>{{ card.value }}</h2>
             </div>
-            <div class="card-body p-0">
-                <div v-if="loading" class="text-center p-5">
-                    <div class="spinner-border text-primary"></div>
+        </div>
+
+        <!-- ===== TABLES ===== -->
+        <div class="grid">
+
+            <!-- RECENT ORDERS -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>Recent Orders</h3>
                 </div>
 
-                <div v-else-if="recentOrders.length === 0" class="text-center p-5 text-muted">
-                    <i class="fas fa-inbox fa-3x mb-2"></i>
-                    <p>No orders found</p>
-                </div>
+                <div v-if="loading" class="empty">Loading...</div>
 
-                <table v-else class="table table-hover mb-0">
-                    <thead class="table-light">
+                <table v-else class="table">
+                    <thead>
                         <tr>
-                            <th>Order ID</th>
-                            <th>Customer Name</th>
-                            <th>Total Amount</th>
+                            <th>ID</th>
+                            <th>Customer</th>
+                            <th>Total</th>
                             <th>Status</th>
                             <th>Date</th>
                         </tr>
                     </thead>
+
                     <tbody>
                         <tr v-for="order in recentOrders" :key="order.id">
                             <td>#{{ order.order_number }}</td>
                             <td>{{ order.customer_name }}</td>
                             <td>৳{{ order.total }}</td>
                             <td>
-                                <span :class="getStatusClass(order.order_status)">
-                                    {{ getStatusText(order.order_status) }}
+                                <span :class="statusClass(order.order_status)">
+                                    {{ order.order_status }}
                                 </span>
                             </td>
                             <td>{{ formatDate(order.created_at) }}</td>
@@ -105,81 +60,254 @@
                     </tbody>
                 </table>
             </div>
+
+            <!-- TOP PRODUCTS -->
+            <div class="panel">
+                <div class="panel-header">
+                    <h3>Top Products</h3>
+                </div>
+
+                <div v-if="loading" class="empty">Loading...</div>
+
+                <table v-else class="table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Brand</th>
+                            <th>Views</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        <tr v-for="product in topProducts" :key="product.id">
+                            <td>{{ product.name }}</td>
+                            <td>{{ product.brand?.name || '-' }}</td>
+                            <td>{{ product.view_count }}</td>
+                            <td>
+                                <span :class="product.is_active ? 'badge success' : 'badge'">
+                                    {{ product.is_active ? 'Active' : 'Inactive' }}
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
         </div>
+
     </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '@/utils/axios'
 
-// State Variables
-const stats = ref({
-    total_orders: 0,
-    total_users: 0,
-    total_products: 0,
-    total_revenue: 0
-})
-const recentOrders = ref([])
 const loading = ref(true)
 
-// Get CSS class based on status
-const getStatusClass = (status) => {
-    const classes = {
-        pending: 'badge bg-warning',
-        processing: 'badge bg-info',
-        shipped: 'badge bg-primary',
-        delivered: 'badge bg-success',
-        cancelled: 'badge bg-danger'
+const dashboard = ref({})
+const recentOrders = ref([])
+const topProducts = ref([])
+
+const today = new Date().toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric'
+})
+
+const statCards = computed(() => [
+    {
+        label: 'Orders',
+        value: dashboard.value?.sales?.orders || 0,
+        icon: 'fas fa-shopping-cart'
+    },
+    {
+        label: 'Users',
+        value: dashboard.value?.people?.users || 0,
+        icon: 'fas fa-users'
+    },
+    {
+        label: 'Products',
+        value: dashboard.value?.catalog?.products || 0,
+        icon: 'fas fa-box'
+    },
+    {
+        label: 'Revenue',
+        value: `৳${dashboard.value?.sales?.revenue || 0}`,
+        icon: 'fas fa-chart-line'
     }
-    return classes[status] || 'badge bg-secondary'
+])
+
+const statusClass = (status) => {
+    const map = {
+        pending: 'badge warning',
+        processing: 'badge info',
+        shipped: 'badge primary',
+        delivered: 'badge success',
+        cancelled: 'badge danger'
+    }
+    return map[status] || 'badge'
 }
 
-// Get readable text based on status
-const getStatusText = (status) => {
-    const texts = {
-        pending: 'Pending',
-        processing: 'Processing',
-        shipped: 'Shipped',
-        delivered: 'Delivered',
-        cancelled: 'Cancelled'
-    }
-    return texts[status] || status.charAt(0).toUpperCase() + status.slice(1)
-}
-
-// Date formatter
-const formatDate = (date) => {
-    return new Date(date).toLocaleDateString('en-US', {
-        year: 'numeric',
+const formatDate = (d) =>
+    new Date(d).toLocaleDateString('en-US', {
         month: 'short',
         day: 'numeric'
     })
-}
 
-// Load Dashboard Data from endpoints that exist in this backend.
-const loadDashboardData = async () => {
+const load = async () => {
     loading.value = true
-
     try {
-        const productsRes = await api.get('admin/products?page=1')
-        const productsData = productsRes.data
+        const { data } = await api.get('admin/dashboard')
+        dashboard.value = data
 
-        stats.value = {
-            ...stats.value,
-            total_products: productsData.meta?.total || productsData.total || productsData.data?.length || 0,
-        }
-
-        // This backend does not expose order summary endpoints yet.
-        recentOrders.value = []
-    } catch (error) {
-        console.error('Dashboard data load error:', error)
+        recentOrders.value = data.recent_orders || []
+        topProducts.value = data.top_products || []
     } finally {
         loading.value = false
     }
 }
 
-// Fetch data on component mount
-onMounted(() => {
-    loadDashboardData()
-})
+onMounted(load)
 </script>
+
+<style scoped>
+/* ===== BASE ===== */
+.dashboard {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* ===== HEADER ===== */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.header h1 {
+    font-size: 22px;
+    font-weight: 600;
+}
+
+.header p {
+    color: #64748b;
+    font-size: 13px;
+}
+
+.date {
+    font-size: 13px;
+    background: var(--bg);
+    padding: 6px 10px;
+    border-radius: 6px;
+    color: var(--text);
+}
+
+/* ===== STATS ===== */
+.stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+}
+
+.stat-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    padding: 16px;
+}
+
+.stat-top {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #64748b;
+}
+
+.stat-card h2 {
+    margin-top: 8px;
+    font-size: 22px;
+}
+
+/* ===== GRID ===== */
+.grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+/* ===== PANEL ===== */
+.panel {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.panel-header {
+    padding: 14px;
+    border-bottom: 1px solid #eee;
+}
+
+.panel-header h3 {
+    font-size: 15px;
+}
+
+/* ===== TABLE ===== */
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    font-size: 12px;
+    color: #64748b;
+    padding: 10px;
+}
+
+.table td {
+    padding: 10px;
+    border-top: 1px solid #f1f5f9;
+}
+
+/* ===== BADGES ===== */
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #e2e8f0;
+}
+
+.badge.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge.warning {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.badge.danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge.primary {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge.info {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+/* ===== EMPTY ===== */
+.empty {
+    padding: 40px;
+    text-align: center;
+    color: #64748b;
+}
+</style>

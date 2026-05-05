@@ -9,4 +9,8 @@
 
 import AdminLogin from '@/components/admin/AdminLogin.vue';
 
+defineOptions({
+  name: 'AdminLoginView'
+})
+
 </script>
