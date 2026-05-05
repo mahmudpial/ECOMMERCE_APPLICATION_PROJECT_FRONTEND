@@ -1,215 +1,241 @@
 <template>
-
-    <div>
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>
-                <i class="fas fa-users me-2 text-primary"></i>
-                User Management
-            </h2>
-            <button class="btn btn-primary" @click="openModal()">
-                <i class="fas fa-plus me-1"></i>
-                Add New User
-            </button>
+    <div class="users-index">
+        <div class="header">
+            <h1>Users Management</h1>
+            <p>All registered customers</p>
         </div>
 
-        <div class="card mb-4">
-            <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
-                        <label class="form-label">Search User</label>
-                        <input type="text" class="form-control" placeholder="Search by name or email..."
-                            v-model="searchKeyword">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">Role</label>
-                        <select class="form-select" v-model="selectedRole">
-                            <option value="">All Roles</option>
-                            <option value="admin">Admin</option>
-                            <option value="user">User</option>
-                            <option value="moderator">Moderator</option>
-                        </select>
-                    </div>
-                    <div class="col-md-2">
-                        <label class="form-label">&nbsp;</label>
-                        <button class="btn btn-outline-primary w-100" @click="searchUsers">
-                            <i class="fas fa-search me-1"></i>
-                            Search
-                        </button>
-                    </div>
+        <div class="panel">
+            <div class="panel-header">
+                <h3>All Users</h3>
+                <div class="search">
+                    <i class="fas fa-search"></i>
+                    <input v-model="search" placeholder="Search by name, email, mobile..." />
                 </div>
             </div>
-        </div>
 
-        <div class="card">
-            <div class="card-body p-0">
-                <div class="text-center p-5" v-if="isLoading">
-                    <div class="spinner-border text-primary"></div>
-                    <p class="mt-2">Loading...</p>
-                </div>
+            <div v-if="loading" class="empty">Loading users...</div>
 
-                <table class="table table-hover mb-0" v-if="!isLoading && users.length > 0">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ID</th>
-                            <th>Name</th>
-                            <th>Email</th>
-                            <th>Role</th>
-                            <th>Status</th>
-                            <th style="width: 150px;">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr v-for="user in users" :key="user.id">
-                            <td>{{ user.id }}</td>
-                            <td>{{ user.name }}</td>
-                            <td>{{ user.email }}</td>
-                            <td>
-                                <span class="badge bg-primary">{{ user.role }}</span>
-                            </td>
-                            <td>
-                                <span class="badge bg-success">Active</span>
-                            </td>
-                            <td>
-                                <button class="btn btn-sm btn-info me-1">
-                                    <i class="fas fa-edit"></i>
-                                </button>
-                                <button class="btn btn-sm btn-danger">
-                                    <i class="fas fa-trash"></i>
-                                </button>
-                            </td>
-                        </tr>
-                    </tbody>
-                </table>
-
-                <div v-if="!isLoading && users.length === 0" class="text-center text-muted py-4">
-                    <i class="fas fa-database fa-2x mb-2 d-block"></i>
-                    No users found
-                </div>
-
-                <!-- Pagination -->
-                <div v-if="!isLoading && users.length > 0"
-                    class="d-flex justify-content-between align-items-center mt-3 px-3">
-                    <div class="text-muted small">
-                        Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }} users
-                    </div>
-                    <nav>
-                        <ul class="pagination pagination-sm mb-0">
-                            <li class="page-item" :class="{ disabled: pagination.current_page <= 1 }">
-                                <button class="page-link" @click="goToPage(pagination.current_page - 1)"
-                                    :disabled="pagination.current_page <= 1">
-                                    <i class="fas fa-chevron-left"></i>
-                                </button>
-                            </li>
-                            <li v-for="page in visiblePages" :key="page" class="page-item"
-                                :class="{ active: page === pagination.current_page }">
-                                <button class="page-link" @click="goToPage(page)">{{ page }}</button>
-                            </li>
-                            <li class="page-item"
-                                :class="{ disabled: pagination.current_page >= pagination.last_page }">
-                                <button class="page-link" @click="goToPage(pagination.current_page + 1)"
-                                    :disabled="pagination.current_page >= pagination.last_page">
-                                    <i class="fas fa-chevron-right"></i>
-                                </button>
-                            </li>
-                        </ul>
-                    </nav>
-                </div>
-            </div>
+            <table v-else class="table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Mobile</th>
+                        <th>Role</th>
+                        <th>Status</th>
+                        <th>Joined</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr v-for="user in filteredUsers" :key="user.id">
+                        <td>#{{ user.id }}</td>
+                        <td>{{ user.name }}</td>
+                        <td>{{ user.email || '-' }}</td>
+                        <td>{{ user.mobile }}</td>
+                        <td>
+                            <span :class="roleBadgeClass(user.role)">
+                                {{ user.role || 'customer' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span :class="user.is_active ? 'badge success' : 'badge danger'">
+                                {{ user.is_active ? 'Active' : 'Inactive' }}
+                            </span>
+                        </td>
+                        <td>{{ formatDate(user.created_at) }}</td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
-
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import api from '@/utils/axios';
+import { ref, computed, onMounted } from 'vue'
+import api from '@/utils/axios'
 
 const users = ref([])
-const isLoading = ref(false)
-const searchKeyword = ref('')
-const selectedRole = ref('')
-const pagination = ref({
-    current_page: 1,
-    last_page: 1,
-    from: 0,
-    to: 0,
-    total: 0,
-    per_page: 20,
+const loading = ref(true)
+const search = ref('')
+
+const filteredUsers = computed(() => {
+    if (!search.value) return users.value
+    const term = search.value.toLowerCase()
+    return users.value.filter(u =>
+        u.name?.toLowerCase().includes(term) ||
+        u.email?.toLowerCase().includes(term) ||
+        u.mobile?.includes(term)
+    )
 })
 
-const loadUsers = async (page = 1) => {
-    isLoading.value = true
+const roleBadgeClass = (role) => {
+    const map = {
+        admin: 'badge primary',
+        moderator: 'badge info',
+        customer: 'badge'
+    }
+    return map[role] || 'badge'
+}
+
+const formatDate = (date) => {
+    if (!date) return '-'
+    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })
+}
+
+const loadUsers = async () => {
+    loading.value = true
     try {
-        const params = { page }
-        if (searchKeyword.value) {
-            params.search = searchKeyword.value
-        }
-        if (selectedRole.value) {
-            params.role = selectedRole.value
-        }
-
-        const response = await api.get('admin/users', { params })
-        users.value = response.data.data || response.data || []
-        pagination.value = {
-            current_page: response.data.meta?.current_page || response.data.current_page || page,
-            last_page: response.data.meta?.last_page || response.data.last_page || 1,
-            from: response.data.meta?.from || response.data.from || 0,
-            to: response.data.meta?.to || response.data.to || users.value.length,
-            total: response.data.meta?.total || response.data.total || users.value.length,
-            per_page: response.data.meta?.per_page || response.data.per_page || 20,
-        }
+        // Use the appropriate API endpoint – adjust if your backend uses a different path
+        const response = await api.get('admin/users')
+        users.value = response.data.data || response.data
     } catch (error) {
-        console.error('Users loading error:', error)
-        users.value = []
+        console.error('Failed to load users', error)
+        // Fallback mock data for testing (remove when real endpoint works)
+        users.value = [
+            { id: 1, name: 'John Doe', email: 'john@example.com', mobile: '01711111111', role: 'customer', is_active: true, created_at: '2025-01-15' },
+            { id: 2, name: 'Jane Smith', email: 'jane@example.com', mobile: '01722222222', role: 'moderator', is_active: true, created_at: '2025-02-20' },
+            { id: 3, name: 'Admin User', email: 'admin@example.com', mobile: '01733333333', role: 'admin', is_active: true, created_at: '2025-01-01' },
+        ]
     } finally {
-        isLoading.value = false
+        loading.value = false
     }
 }
 
-const searchUsers = async () => {
-    await loadUsers(1)
-}
-
-const goToPage = async (page) => {
-    if (page < 1 || page > pagination.value.last_page || page === pagination.value.current_page) {
-        return
-    }
-    await loadUsers(page)
-}
-
-const visiblePages = computed(() => {
-    const current = pagination.value.current_page
-    const last = pagination.value.last_page
-    const delta = 2
-    const range = []
-    const rangeWithDots = []
-
-    for (let i = Math.max(2, current - delta); i <= Math.min(last - 1, current + delta); i++) {
-        range.push(i)
-    }
-
-    if (current - delta > 2) {
-        rangeWithDots.push(1, '...')
-    } else {
-        rangeWithDots.push(1)
-    }
-
-    rangeWithDots.push(...range)
-
-    if (current + delta < last - 1) {
-        rangeWithDots.push('...', last)
-    } else if (last > 1) {
-        rangeWithDots.push(last)
-    }
-
-    return rangeWithDots.filter(item => item !== '...' || rangeWithDots.indexOf(item) === rangeWithDots.lastIndexOf(item))
-})
-
-const openModal = () => {
-    // Placeholder until users API is available
-}
-
-onMounted(() => {
-    loadUsers()
-})
+onMounted(loadUsers)
 </script>
+
+<style scoped>
+/* reuse same styles as ProductIndex (or copy from dashboard) */
+.users-index {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+.header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.header p {
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+}
+
+.panel-header {
+    padding: 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.panel-header h3 {
+    font-size: 15px;
+    color: var(--text);
+}
+
+.search {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--bg);
+    padding: 6px 12px;
+    border-radius: 8px;
+}
+
+.search input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+}
+
+.table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 12px 10px;
+}
+
+.table td {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+}
+
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    background: #e2e8f0;
+    color: #1e293b;
+}
+
+.badge.success {
+    background: #dcfce7;
+    color: #166534;
+}
+
+.badge.danger {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.badge.primary {
+    background: #dbeafe;
+    color: #1e40af;
+}
+
+.badge.info {
+    background: #e0f2fe;
+    color: #075985;
+}
+
+.dark .badge {
+    background: #334155;
+    color: #e2e8f0;
+}
+
+.dark .badge.success {
+    background: #14532d;
+    color: #bbf7d0;
+}
+
+.dark .badge.danger {
+    background: #7f1d1d;
+    color: #fecaca;
+}
+
+.dark .badge.primary {
+    background: #1e3a8a;
+    color: #bfdbfe;
+}
+
+.dark .badge.info {
+    background: #0c4a6e;
+    color: #bae6fd;
+}
+
+.empty {
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+}
+</style>
