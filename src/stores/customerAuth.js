@@ -8,18 +8,23 @@ export const useCustomerAuthStore = defineStore('customerAuth', {
     isAuthenticated: !!localStorage.getItem('customer_token'),
   }),
   actions: {
-    async login(credentials) {
+    // Direct login after verifying OTP (used by Login.vue)
+    login(authData) {
+      if (authData.token) {
+        this.token = authData.token
+        this.user = authData.user
+        this.isAuthenticated = true
+        localStorage.setItem('customer_token', authData.token)
+        localStorage.setItem('customer_user', JSON.stringify(authData.user))
+        return true
+      }
+      return false
+    },
+    // Alternative: full login flow (if you want to avoid separate API call in component)
+    async loginWithOtp(credentials) {
       try {
         const res = await api.post('auth/login/verify-otp', credentials)
-        if (res.data.token) {
-          this.token = res.data.token
-          this.user = res.data.user
-          this.isAuthenticated = true
-          localStorage.setItem('customer_token', res.data.token)
-          localStorage.setItem('customer_user', JSON.stringify(res.data.user))
-          return true
-        }
-        return false
+        return this.login(res.data)
       } catch (error) {
         console.error(error)
         return false

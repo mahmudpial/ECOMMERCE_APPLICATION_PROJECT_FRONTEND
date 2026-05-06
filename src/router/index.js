@@ -8,10 +8,10 @@ import BrandsIndex from '@/components/admin/BrandsIndex.vue'
 import OrdersIndex from '@/components/admin/OrdersIndex.vue'
 import UsersIndex from '@/components/admin/UsersIndex.vue'
 import { useAuthStore } from '@/stores/auth'
-import { useCustomerAuthStore } from '@/stores/customerAuth' // ✅ added import
+import { useCustomerAuthStore } from '@/stores/customerAuth'
 
 const routes = [
-  // Admin routes
+  // here is my Admin routes
   {
     path: '/admin/login',
     name: 'admin.login',
@@ -33,12 +33,18 @@ const routes = [
     ],
   },
 
-  // Customer routes (storefront)
+  // here is my Customer routes
   {
     path: '/',
     component: () => import('@/layout/CustomerLayout.vue'),
     children: [
       { path: '', name: 'home', component: () => import('@/views/customer/Home.vue') },
+
+      {
+        path: 'products',
+        name: 'products',
+        component: () => import('@/views/customer/Products.vue'),
+      },
       {
         path: 'product/:id',
         name: 'product.detail',
