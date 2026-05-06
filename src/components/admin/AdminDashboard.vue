@@ -249,72 +249,7 @@ onMounted(load)
     background-color: var(--card);
 }
 
-.badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    display: inline-block;
-}
 
-.badge {
-    background: #e2e8f0;
-    color: #1e293b;
-}
-
-.badge.success {
-    background: #dcfce7;
-    color: #166534;
-}
-
-.badge.warning {
-    background: #fef3c7;
-    color: #92400e;
-}
-
-.badge.danger {
-    background: #fee2e2;
-    color: #991b1b;
-}
-
-.badge.primary {
-    background: #dbeafe;
-    color: #1e40af;
-}
-
-.badge.info {
-    background: #e0f2fe;
-    color: #075985;
-}
-
-.dark .badge {
-    background: #334155;
-    color: #e2e8f0;
-}
-
-.dark .badge.success {
-    background: #14532d;
-    color: #bbf7d0;
-}
-
-.dark .badge.warning {
-    background: #78350f;
-    color: #fef08a;
-}
-
-.dark .badge.danger {
-    background: #7f1d1d;
-    color: #fecaca;
-}
-
-.dark .badge.primary {
-    background: #1e3a8a;
-    color: #bfdbfe;
-}
-
-.dark .badge.info {
-    background: #0c4a6e;
-    color: #bae6fd;
-}
 
 .empty {
     padding: 40px;

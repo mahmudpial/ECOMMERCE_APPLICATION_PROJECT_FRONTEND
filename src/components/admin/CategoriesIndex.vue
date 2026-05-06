@@ -468,34 +468,6 @@ onMounted(() => {
     border-radius: 0.375rem;
 }
 
-/* Badges (light mode defaults) */
-.badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    display: inline-block;
-}
-
-.badge.bg-success {
-    background-color: #dcfce7 !important;
-    color: #166534;
-}
-
-.badge.bg-secondary {
-    background-color: #e2e8f0 !important;
-    color: #1e293b;
-}
-
-/* Dark mode overrides */
-.dark .badge.bg-success {
-    background-color: #14532d !important;
-    color: #bbf7d0;
-}
-
-.dark .badge.bg-secondary {
-    background-color: #334155 !important;
-    color: #e2e8f0;
-}
 
 /* Action buttons */
 .action-buttons {

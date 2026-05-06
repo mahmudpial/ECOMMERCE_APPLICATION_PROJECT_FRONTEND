@@ -4,13 +4,11 @@
         <!-- TOP NAVBAR -->
         <header class="topbar">
             <div class="topbar-inner">
-
                 <!-- LEFT -->
                 <div class="left">
                     <button class="hamburger" @click="toggleSidebar">
                         <i class="fas fa-bars"></i>
                     </button>
-
                     <div class="brand">
                         <span class="logo">◆</span>
                         <span class="name">Commercia</span>
@@ -23,23 +21,28 @@
                     <input v-model="searchQuery" @keyup.enter="goSearch" placeholder="Search products, orders..." />
                 </div>
 
-                <!-- RIGHT -->
+                <!-- RIGHT (hidden on mobile) -->
                 <div class="right">
-                    <!-- THEME -->
                     <button class="icon-btn" @click="toggleTheme">
                         <i :class="isDark ? 'fas fa-sun' : 'fas fa-moon'"></i>
                     </button>
-
-                    <!-- USER -->
                     <div class="user-menu" @click="toggleUserMenu">
                         <div class="avatar">
                             {{ authStore?.displayName?.charAt(0) || 'A' }}
                         </div>
                         <span class="username">{{ authStore?.displayName || 'Admin' }}</span>
-
-                        <div v-if="userMenuOpen" class="dropdown">
-                            <button @click="handleLogout">
-                                <i class="fas fa-sign-out-alt"></i> Logout
+                        <div v-if="userMenuOpen" class="dropdown dropdown-desktop">
+                            <div class="dropdown-header">
+                                <div class="dropdown-avatar">{{ authStore?.displayName?.charAt(0) || 'A' }}</div>
+                                <div class="dropdown-info">
+                                    <div class="dropdown-name">{{ authStore?.displayName || 'Admin' }}</div>
+                                    <div class="dropdown-role">Administrator</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button @click="handleLogout" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
                             </button>
                         </div>
                     </div>
@@ -52,52 +55,54 @@
 
             <!-- SIDEBAR -->
             <aside class="sidebar" :class="{ collapsed, mobile: mobileOpen }">
-
                 <nav>
-                    <router-link to="/admin/dashboard">
-                        <i class="fas fa-chart-line"></i>
-                        <span v-if="!collapsed">Dashboard</span>
-                    </router-link>
-
-                    <router-link to="/admin/product-manage">
-                        <i class="fas fa-box"></i>
-                        <span v-if="!collapsed">Products</span>
-                    </router-link>
-
-                    <router-link to="/admin/brands">
-                        <i class="fas fa-gem"></i>
-                        <span v-if="!collapsed">Brands</span>
-                    </router-link>
-
-                    <router-link to="/admin/categories">
-                        <i class="fas fa-tags"></i>
-                        <span v-if="!collapsed">Categories</span>
-                    </router-link>
-
-                    <router-link to="/admin/orders">
-                        <i class="fas fa-shopping-cart"></i>
-                        <span v-if="!collapsed">Orders</span>
-                    </router-link>
-
-                    <router-link to="/admin/users">
-                        <i class="fas fa-users"></i>
-                        <span v-if="!collapsed">Users</span>
-                    </router-link>
+                    <router-link to="/admin/dashboard"><i class="fas fa-chart-line"></i><span
+                            v-if="!collapsed">Dashboard</span></router-link>
+                    <router-link to="/admin/product-manage"><i class="fas fa-box"></i><span
+                            v-if="!collapsed">Products</span></router-link>
+                    <router-link to="/admin/brands"><i class="fas fa-gem"></i><span
+                            v-if="!collapsed">Brands</span></router-link>
+                    <router-link to="/admin/categories"><i class="fas fa-tags"></i><span
+                            v-if="!collapsed">Categories</span></router-link>
+                    <router-link to="/admin/orders"><i class="fas fa-shopping-cart"></i><span
+                            v-if="!collapsed">Orders</span></router-link>
+                    <router-link to="/admin/users"><i class="fas fa-users"></i><span
+                            v-if="!collapsed">Users</span></router-link>
                 </nav>
+
+                <!-- Mobile Bottom Section -->
+                <div class="sidebar-bottom">
+                    <button class="icon-btn theme-mobile" @click="toggleTheme">
+                        <i :class="isDark ? 'fas fa-sun' : 'fas fa-moon'"></i>
+                        <span v-if="!collapsed" class="btn-label">Theme</span>
+                    </button>
+                    <div class="user-menu-mobile" @click="toggleUserMenuMobile">
+                        <div class="avatar">{{ authStore?.displayName?.charAt(0) || 'A' }}</div>
+                        <span v-if="!collapsed" class="username">{{ authStore?.displayName || 'Admin' }}</span>
+                        <div v-if="userMenuOpenMobile" class="dropdown dropdown-mobile">
+                            <div class="dropdown-header">
+                                <div class="dropdown-avatar">{{ authStore?.displayName?.charAt(0) || 'A' }}</div>
+                                <div class="dropdown-info">
+                                    <div class="dropdown-name">{{ authStore?.displayName || 'Admin' }}</div>
+                                    <div class="dropdown-role">Administrator</div>
+                                </div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button @click="handleLogout" class="dropdown-item">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span>Logout</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
 
                 <button class="collapse-btn" @click="collapsed = !collapsed">
                     <i :class="collapsed ? 'fas fa-angle-right' : 'fas fa-angle-left'"></i>
                 </button>
             </aside>
 
-            <!-- OVERLAY -->
             <div v-if="mobileOpen" class="overlay" @click="mobileOpen = false"></div>
-
-            <!-- Default slot from page wrappers; router-view for nested admin routes -->
-            <main class="content">
-                <router-view />
-            </main>
-
+            <main class="content"><router-view /></main>
         </div>
     </div>
 </template>
@@ -114,60 +119,39 @@ const isDark = ref(false)
 const collapsed = ref(false)
 const mobileOpen = ref(false)
 const userMenuOpen = ref(false)
+const userMenuOpenMobile = ref(false)
 const searchQuery = ref('')
 
-// Close mobile menu on window resize
-const handleResize = () => {
-    if (window.innerWidth >= 768) {
-        mobileOpen.value = false
-    }
-}
-
+const handleResize = () => { if (window.innerWidth >= 768) mobileOpen.value = false }
 onMounted(() => {
     const savedTheme = localStorage.getItem('theme')
-    if (savedTheme === 'dark') {
-        isDark.value = true
-    }
+    if (savedTheme === 'dark') isDark.value = true
     window.addEventListener('resize', handleResize)
 })
-
-onUnmounted(() => {
-    window.removeEventListener('resize', handleResize)
-})
+onUnmounted(() => window.removeEventListener('resize', handleResize))
 
 const toggleSidebar = () => {
-    if (window.innerWidth < 768) {
-        mobileOpen.value = !mobileOpen.value
-    } else {
-        collapsed.value = !collapsed.value
-    }
+    if (window.innerWidth < 768) mobileOpen.value = !mobileOpen.value
+    else collapsed.value = !collapsed.value
 }
-
 const toggleTheme = () => {
     isDark.value = !isDark.value
-    // Optional: persist preference in localStorage
     localStorage.setItem('theme', isDark.value ? 'dark' : 'light')
 }
-
-const toggleUserMenu = () => {
-    userMenuOpen.value = !userMenuOpen.value
-}
-
+const toggleUserMenu = () => { userMenuOpen.value = !userMenuOpen.value }
+const toggleUserMenuMobile = () => { userMenuOpenMobile.value = !userMenuOpenMobile.value }
 const goSearch = () => {
     if (!searchQuery.value.trim()) return
     router.push({ path: '/admin/product-manage', query: { search: searchQuery.value } })
 }
-
 const handleLogout = async () => {
-    if (authStore && authStore.logout) {
-        await authStore.logout()
-    }
+    if (authStore && authStore.logout) await authStore.logout()
     router.push('/admin/login')
 }
 </script>
 
 <style scoped>
-/* ROOT */
+/* ===== ROOT VARIABLES (same as before) ===== */
 .admin-layout {
     --bg: #f6f8fb;
     --card: #ffffff;
@@ -175,7 +159,6 @@ const handleLogout = async () => {
     --muted: #64748b;
     --primary: #2563eb;
     --border: #e5e7eb;
-
     display: flex;
     flex-direction: column;
     height: 100vh;
@@ -183,7 +166,6 @@ const handleLogout = async () => {
     color: var(--text);
 }
 
-/* DARK MODE */
 .admin-layout.dark {
     --bg: #0f172a;
     --card: #1e293b;
@@ -192,11 +174,11 @@ const handleLogout = async () => {
     --border: #334155;
 }
 
-/* TOPBAR */
+/* ===== TOPBAR (no changes) ===== */
 .topbar {
     height: 64px;
     background: var(--card);
-    border-bottom: 1px solid var(--border, #e5e7eb);
+    border-bottom: 1px solid var(--border);
     display: flex;
     align-items: center;
     flex-shrink: 0;
@@ -233,7 +215,6 @@ const handleLogout = async () => {
     color: var(--primary);
 }
 
-/* SEARCH */
 .search-box {
     margin: 0 auto;
     display: flex;
@@ -253,7 +234,6 @@ const handleLogout = async () => {
     color: var(--text);
 }
 
-/* RIGHT */
 .right {
     display: flex;
     align-items: center;
@@ -269,7 +249,7 @@ const handleLogout = async () => {
     color: var(--text);
 }
 
-/* USER */
+/* ===== USER MENU (DESKTOP) ===== */
 .user-menu {
     display: flex;
     align-items: center;
@@ -287,41 +267,107 @@ const handleLogout = async () => {
     align-items: center;
     justify-content: center;
     border-radius: 50%;
+    font-weight: 600;
 }
 
+.username {
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+/* Dropdown – modern styles */
 .dropdown {
     position: absolute;
     right: 0;
     top: 45px;
     background: var(--card);
-    border-radius: 8px;
-    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.02);
+    min-width: 220px;
     z-index: 100;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
 }
 
-.dropdown button {
-    border: none;
-    background: none;
-    padding: 10px 16px;
-    width: 100%;
-    text-align: left;
-    cursor: pointer;
-    color: var(--text);
-    white-space: nowrap;
-}
-
-.dropdown button:hover {
+.dropdown-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
     background: var(--bg);
 }
 
-/* BODY */
+.dropdown-avatar {
+    width: 40px;
+    height: 40px;
+    background: var(--primary);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+
+.dropdown-info {
+    flex: 1;
+}
+
+.dropdown-name {
+    font-weight: 600;
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+.dropdown-role {
+    font-size: 0.7rem;
+    color: var(--muted);
+}
+
+.dropdown-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 0;
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 10px 16px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--text);
+    font-size: 0.85rem;
+    transition: background 0.2s;
+}
+
+.dropdown-item:hover {
+    background: var(--bg);
+}
+
+.dropdown-item i {
+    width: 20px;
+    color: var(--muted);
+}
+
+/* Desktop dropdown – positioned at topbar */
+.dropdown-desktop {
+    top: 40px;
+}
+
+/* ===== SIDEBAR ===== */
 .layout-body {
     display: flex;
     flex: 1;
     overflow: hidden;
 }
 
-/* SIDEBAR */
 .sidebar {
     width: 240px;
     background: var(--card);
@@ -364,7 +410,52 @@ const handleLogout = async () => {
     color: white;
 }
 
-/* COLLAPSE BTN */
+/* Mobile bottom section */
+.sidebar-bottom {
+    margin-top: auto;
+    padding: 12px;
+    border-top: 1px solid var(--border);
+    display: none;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.theme-mobile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    justify-content: flex-start;
+}
+
+.theme-mobile .btn-label {
+    font-size: 0.9rem;
+    color: var(--text);
+}
+
+.user-menu-mobile {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    position: relative;
+    padding: 4px 0;
+}
+
+.user-menu-mobile .username {
+    color: var(--text);
+    font-size: 0.9rem;
+}
+
+/* Mobile dropdown – appears above */
+.dropdown-mobile {
+    bottom: 45px;
+    top: auto;
+    right: auto;
+    left: 0;
+}
+
+/* Collapse button */
 .collapse-btn {
     position: absolute;
     bottom: 20px;
@@ -381,7 +472,6 @@ const handleLogout = async () => {
     color: var(--text);
 }
 
-/* CONTENT */
 .content {
     flex: 1;
     padding: 20px;
@@ -389,7 +479,6 @@ const handleLogout = async () => {
     background: var(--bg);
 }
 
-/* MOBILE */
 .overlay {
     position: fixed;
     inset: 0;
@@ -397,7 +486,12 @@ const handleLogout = async () => {
     z-index: 40;
 }
 
+/* ===== RESPONSIVE ===== */
 @media (max-width: 768px) {
+    .right {
+        display: none;
+    }
+
     .sidebar {
         position: fixed;
         left: -100%;
@@ -411,12 +505,35 @@ const handleLogout = async () => {
         left: 0;
     }
 
+    .collapse-btn {
+        display: none;
+    }
+
     .search-box {
         display: none;
     }
 
-    .collapse-btn {
+    .sidebar-bottom {
+        display: flex;
+    }
+}
+
+@media (min-width: 769px) {
+    .sidebar-bottom {
         display: none;
+    }
+}
+
+@media (min-width: 769px) and (min-width: 769px) {
+
+    .sidebar.collapsed .sidebar-bottom .btn-label,
+    .sidebar.collapsed .sidebar-bottom .username {
+        display: none;
+    }
+
+    .sidebar.collapsed .sidebar-bottom .theme-mobile,
+    .sidebar.collapsed .sidebar-bottom .user-menu-mobile {
+        justify-content: center;
     }
 }
 </style>

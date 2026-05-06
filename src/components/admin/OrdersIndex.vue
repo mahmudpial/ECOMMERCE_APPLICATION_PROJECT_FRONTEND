@@ -375,44 +375,6 @@ onMounted(() => {
     background-color: var(--card);
 }
 
-/* Badges (light mode) – Bootstrap colour classes are used, but we add dark overrides */
-.badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-}
-
-/* Dark mode overrides for badges */
-.dark .badge.bg-warning {
-    background-color: #f59e0b !important;
-    color: #1e293b !important;
-}
-
-.dark .badge.bg-info {
-    background-color: #0ea5e9 !important;
-    color: white;
-}
-
-.dark .badge.bg-primary {
-    background-color: #3b82f6 !important;
-    color: white;
-}
-
-.dark .badge.bg-success {
-    background-color: #10b981 !important;
-    color: white;
-}
-
-.dark .badge.bg-danger {
-    background-color: #ef4444 !important;
-    color: white;
-}
-
-.dark .badge.bg-secondary {
-    background-color: #475569 !important;
-    color: white;
-}
-
 /* Action buttons */
 .btn-sm {
     min-width: 64px;

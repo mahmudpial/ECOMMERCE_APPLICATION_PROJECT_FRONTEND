@@ -118,7 +118,6 @@ onMounted(loadUsers)
 </script>
 
 <style scoped>
-/* Import base styles for colors and typography */
 /* ===== LAYOUT ===== */
 .users-index {
     display: flex;

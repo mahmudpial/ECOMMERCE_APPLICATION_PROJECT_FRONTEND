@@ -295,7 +295,9 @@ const normalizeImagesInput = (value) => {
     try {
         const parsed = JSON.parse(trimmed)
         if (Array.isArray(parsed)) return parsed.filter(Boolean)
-    } catch { }
+    } catch {
+        /* empty */
+}
     return trimmed.split(/[\n,]/).map(s => s.trim()).filter(Boolean)
 }
 
@@ -303,7 +305,9 @@ const normalizeImagesInput = (value) => {
 const getProductImage = (product) => {
     let images = product.images
     if (typeof images === 'string' && images.trim().startsWith('[')) {
-        try { images = JSON.parse(images) } catch { }
+        try { images = JSON.parse(images) } catch {
+            /* empty */
+        }
     }
     if (Array.isArray(images) && images.length) return images[0]
     if (typeof images === 'string' && images.trim()) return images
@@ -317,7 +321,9 @@ const populateForm = (product) => {
     form.description = product.description || ''
     let images = product.images
     if (typeof images === 'string' && images.trim().startsWith('[')) {
-        try { images = JSON.parse(images) } catch { }
+        try { images = JSON.parse(images) } catch {
+            /* empty */
+        }
     }
     form.images = Array.isArray(images) ? images.join('\n') : (typeof images === 'string' ? images : '')
     form.stock = product.stock ?? 0
@@ -543,35 +549,6 @@ onMounted(() => { loadProducts(); loadBrands(); loadCategories() })
     border-top: 1px solid var(--border);
     color: var(--text);
     background-color: var(--card);
-}
-
-/* Badge styles (light mode) */
-.badge {
-    padding: 4px 8px;
-    border-radius: 6px;
-    font-size: 12px;
-    display: inline-block;
-}
-
-.badge.bg-success {
-    background-color: #dcfce7 !important;
-    color: #166534;
-}
-
-.badge.bg-secondary {
-    background-color: #e2e8f0 !important;
-    color: #1e293b;
-}
-
-/* Dark mode overrides */
-.dark .badge.bg-success {
-    background-color: #14532d !important;
-    color: #bbf7d0;
-}
-
-.dark .badge.bg-secondary {
-    background-color: #334155 !important;
-    color: #e2e8f0;
 }
 
 /* Product image placeholder */

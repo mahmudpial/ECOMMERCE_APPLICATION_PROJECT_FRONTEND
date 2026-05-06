@@ -1,30 +1,22 @@
-/* =====================================================
-   ENTRY POINT: Tailwind + Custom Base Styles
-   =====================================================
-   This file is imported in main.js. It applies Tailwind's
-   base, components, and utilities, then overrides/adds
-   custom styles for a consistent, responsive admin panel.
-   ===================================================== */
+/* 1. Import base.css first (required by PostCSS) */
+@import './base.css';
 
-/* 1. Tailwind directives (keep these first) */
+/* ENTRY POINT: Tailwind + Custom Base Styles */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* 2. Import your existing base.css (if any – it may contain extra resets) */
-@import './base.css';
 
-/* 3. Global app container – full width, no margin/padding, minimum height */
+/* 3. Global app container */
 #app {
   width: 100%;
   margin: 0;
   padding: 0;
   font-weight: normal;
   min-height: 100vh;
-  /* Ensure the app fills the viewport */
 }
 
-/* 4. Link styles – clean, inherits color, smooth transition */
+/* 4. Link styles */
 a {
   text-decoration: none;
   color: inherit;
@@ -33,20 +25,18 @@ a {
 
 a:hover {
   color: inherit;
-  /* Keeps hover from changing color unexpectedly */
 }
 
-/* 5. Body background – modern gradient + subtle radial accents */
+/* 5. Body background (light mode) */
 body {
   background:
     radial-gradient(circle at top left, rgba(59, 130, 246, 0.10), transparent 26%),
     radial-gradient(circle at top right, rgba(16, 185, 129, 0.10), transparent 24%),
     linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
   color: #0f172a;
-  /* Soft blue-slate background, suitable for light mode */
 }
 
-/* 6. Form elements inherit font – avoids inconsistent sizing */
+/* 6. Form elements inherit font */
 button,
 input,
 select,
@@ -55,24 +45,19 @@ textarea {
 }
 
 /* =====================================================
-   RESPONSIVE GLOBAL OVERRIDES (works with Tailwind)
+   RESPONSIVE GLOBAL OVERRIDES
    ===================================================== */
-
-/* Small screens (phones) */
 @media (max-width: 640px) {
   body {
     font-size: 14px;
-    /* slightly smaller base font */
   }
 
   h1 {
     font-size: 1.5rem;
-    /* 24px */
   }
 
   h2 {
     font-size: 1.25rem;
-    /* 20px */
   }
 
   .container {
@@ -81,7 +66,6 @@ textarea {
   }
 }
 
-/* Medium screens (tablets) */
 @media (min-width: 641px) and (max-width: 1024px) {
   body {
     font-size: 15px;
@@ -94,45 +78,88 @@ textarea {
 }
 
 /* =====================================================
-   HELPER UTILITIES (complement Tailwind)
+   HELPER UTILITIES
    ===================================================== */
-
-/* Hide scrollbar on the whole app but keep functionality */
-/* Optional: uncomment if you want a cleaner look */
-/*
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-::-webkit-scrollbar-track {
-  background: #e2e8f0;
-}
-::-webkit-scrollbar-thumb {
-  background: #94a3b8;
-  border-radius: 3px;
-}
-*/
-
-/* Better focus outlines for accessibility */
 *:focus-visible {
   outline: 2px solid #3b82f6;
   outline-offset: 2px;
 }
 
-/* Smooth scrolling for the whole page (except where overridden) */
 html {
   scroll-behavior: smooth;
 }
 
-/* =====================================================
-   DARK MODE READY (variables are set in AdminMaster.vue)
-   =====================================================
-   These styles assume the parent .admin-layout.dark toggles
-   the dark mode. The following rules adapt background and
-   text colors when dark mode is active.
-   ===================================================== */
+/* Global badge styles (light & dark) */
+.badge {
+  padding: 4px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  display: inline-block;
+}
 
-/* Global dark mode overrides – work when .dark class is on <html> or <body> */
+.badge {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.badge.success {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.warning {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.badge.danger {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.badge.primary {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.badge.info {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.dark .badge {
+  background: #334155;
+  color: #e2e8f0;
+}
+
+.dark .badge.success {
+  background: #14532d;
+  color: #bbf7d0;
+}
+
+.dark .badge.warning {
+  background: #78350f;
+  color: #fef08a;
+}
+
+.dark .badge.danger {
+  background: #7f1d1d;
+  color: #fecaca;
+}
+
+.dark .badge.primary {
+  background: #1e3a8a;
+  color: #bfdbfe;
+}
+
+.dark .badge.info {
+  background: #0c4a6e;
+  color: #bae6fd;
+}
+
+/* =====================================================
+   DARK MODE – GLOBAL OVERRIDES
+   ===================================================== */
 .dark body {
   background: #0f172a;
   color: #e2e8f0;
@@ -155,6 +182,59 @@ html {
   color: #94a3b8 !important;
 }
 
+/* ===== DARK MODE – MODAL & FORM CONTROLS ===== */
+.dark .modal-header,
+.dark .modal-footer {
+  border-color: #334155 !important;
+  background-color: #1e293b !important;
+}
+
+.dark .modal-title,
+.dark .modal-body label,
+.dark .modal-body .form-label,
+.dark .modal-body .form-check-label {
+  color: #e2e8f0 !important;
+}
+
+.dark .modal-body .form-control,
+.dark .modal-body .form-select,
+.dark .modal-body .input-group-text {
+  background-color: #0f172a !important;
+  border-color: #475569 !important;
+  color: #f1f5f9 !important;
+}
+
+.dark .modal-body .form-control:focus,
+.dark .modal-body .form-select:focus {
+  border-color: #3b82f6 !important;
+  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
+}
+
+.dark .modal-body .form-control::placeholder {
+  color: #94a3b8 !important;
+}
+
+.dark .modal-body .text-muted,
+.dark .modal-body small {
+  color: #94a3b8 !important;
+}
+
+.dark .btn-close {
+  filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.dark .alert-danger {
+  background-color: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #fecaca;
+}
+
+.dark .alert-success {
+  background-color: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #a7f3d0;
+}
+
 /* =====================================================
    MOBILE TOUCH IMPROVEMENTS
    ===================================================== */
@@ -165,27 +245,22 @@ html {
   .icon-btn,
   [role="button"] {
     min-height: 44px;
-    /* Apple's minimum tap target size */
     min-width: 44px;
   }
 
-  /* Slightly larger touch targets for table action buttons */
   .table .btn-sm {
     padding: 8px 12px;
   }
 }
 
 /* =====================================================
-   UTILITY CLASSES FOR RESPONSIVE LAYOUT
+   UTILITY CLASSES
    ===================================================== */
 .hide-scrollbar {
   -ms-overflow-style: none;
-  /* IE and Edge */
   scrollbar-width: none;
-  /* Firefox */
 }
 
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
-  /* Chrome, Safari, Opera */
 }
