@@ -1,17 +1,30 @@
+/* =====================================================
+   ENTRY POINT: Tailwind + Custom Base Styles
+   =====================================================
+   This file is imported in main.js. It applies Tailwind's
+   base, components, and utilities, then overrides/adds
+   custom styles for a consistent, responsive admin panel.
+   ===================================================== */
+
+/* 1. Tailwind directives (keep these first) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* 2. Import your existing base.css (if any – it may contain extra resets) */
 @import './base.css';
 
+/* 3. Global app container – full width, no margin/padding, minimum height */
 #app {
   width: 100%;
   margin: 0;
   padding: 0;
   font-weight: normal;
   min-height: 100vh;
+  /* Ensure the app fills the viewport */
 }
 
+/* 4. Link styles – clean, inherits color, smooth transition */
 a {
   text-decoration: none;
   color: inherit;
@@ -20,19 +33,159 @@ a {
 
 a:hover {
   color: inherit;
+  /* Keeps hover from changing color unexpectedly */
 }
 
+/* 5. Body background – modern gradient + subtle radial accents */
 body {
   background:
     radial-gradient(circle at top left, rgba(59, 130, 246, 0.10), transparent 26%),
     radial-gradient(circle at top right, rgba(16, 185, 129, 0.10), transparent 24%),
     linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
   color: #0f172a;
+  /* Soft blue-slate background, suitable for light mode */
 }
 
+/* 6. Form elements inherit font – avoids inconsistent sizing */
 button,
 input,
 select,
 textarea {
   font: inherit;
+}
+
+/* =====================================================
+   RESPONSIVE GLOBAL OVERRIDES (works with Tailwind)
+   ===================================================== */
+
+/* Small screens (phones) */
+@media (max-width: 640px) {
+  body {
+    font-size: 14px;
+    /* slightly smaller base font */
+  }
+
+  h1 {
+    font-size: 1.5rem;
+    /* 24px */
+  }
+
+  h2 {
+    font-size: 1.25rem;
+    /* 20px */
+  }
+
+  .container {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+}
+
+/* Medium screens (tablets) */
+@media (min-width: 641px) and (max-width: 1024px) {
+  body {
+    font-size: 15px;
+  }
+
+  .container {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+}
+
+/* =====================================================
+   HELPER UTILITIES (complement Tailwind)
+   ===================================================== */
+
+/* Hide scrollbar on the whole app but keep functionality */
+/* Optional: uncomment if you want a cleaner look */
+/*
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #e2e8f0;
+}
+::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 3px;
+}
+*/
+
+/* Better focus outlines for accessibility */
+*:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}
+
+/* Smooth scrolling for the whole page (except where overridden) */
+html {
+  scroll-behavior: smooth;
+}
+
+/* =====================================================
+   DARK MODE READY (variables are set in AdminMaster.vue)
+   =====================================================
+   These styles assume the parent .admin-layout.dark toggles
+   the dark mode. The following rules adapt background and
+   text colors when dark mode is active.
+   ===================================================== */
+
+/* Global dark mode overrides – work when .dark class is on <html> or <body> */
+.dark body {
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+.dark .card,
+.dark .panel,
+.dark .modal-content,
+.dark .table {
+  background-color: #1e293b !important;
+  border-color: #334155 !important;
+}
+
+.dark .table-light {
+  background-color: #334155 !important;
+  color: #f1f5f9;
+}
+
+.dark .text-muted {
+  color: #94a3b8 !important;
+}
+
+/* =====================================================
+   MOBILE TOUCH IMPROVEMENTS
+   ===================================================== */
+@media (max-width: 768px) {
+
+  button,
+  .btn,
+  .icon-btn,
+  [role="button"] {
+    min-height: 44px;
+    /* Apple's minimum tap target size */
+    min-width: 44px;
+  }
+
+  /* Slightly larger touch targets for table action buttons */
+  .table .btn-sm {
+    padding: 8px 12px;
+  }
+}
+
+/* =====================================================
+   UTILITY CLASSES FOR RESPONSIVE LAYOUT
+   ===================================================== */
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  /* IE and Edge */
+  scrollbar-width: none;
+  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+  /* Chrome, Safari, Opera */
 }

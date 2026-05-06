@@ -1,26 +1,29 @@
 <template>
-    <div>
-        <!-- Header -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>
-                <i class="fas fa-box me-2 text-primary"></i>
-                Product Management
-            </h2>
-            <button class="btn btn-primary" @click="openModal()">
+    <div class="product-index">
+        <!-- Header: responsive stack on mobile -->
+        <div class="header">
+            <div style="text-align: justify;">
+                <h2>
+                    <i class="fas fa-box me-2 text-primary"></i>
+                    Product Management
+                </h2>
+                <p>Manage your product catalog</p>
+            </div>
+            <button class="btn btn-primary add-btn" @click="openModal()">
                 <i class="fas fa-plus me-1"></i>
                 Add New Product
             </button>
         </div>
 
-        <!-- Search & Filter -->
+        <!-- Search & Filter Card: responsive grid -->
         <div class="card mb-4">
             <div class="card-body">
-                <div class="row">
-                    <div class="col-md-4">
+                <div class="filter-grid">
+                    <div class="filter-item">
                         <label class="form-label">Search</label>
                         <input type="text" class="form-control" placeholder="Search product..." v-model="searchKeyword">
                     </div>
-                    <div class="col-md-3">
+                    <div class="filter-item">
                         <label class="form-label">Brand</label>
                         <select class="form-select" v-model="selectedBrand">
                             <option value="">All Brands</option>
@@ -29,7 +32,7 @@
                             </option>
                         </select>
                     </div>
-                    <div class="col-md-3">
+                    <div class="filter-item">
                         <label class="form-label">Category</label>
                         <select class="form-select" v-model="selectedCategory">
                             <option value="">All Categories</option>
@@ -38,7 +41,7 @@
                             </option>
                         </select>
                     </div>
-                    <div class="col-md-2">
+                    <div class="filter-item filter-button">
                         <label class="form-label">&nbsp;</label>
                         <button class="btn btn-outline-primary w-100" @click="searchProducts">
                             <i class="fas fa-search me-1"></i>
@@ -49,7 +52,7 @@
             </div>
         </div>
 
-        <!-- Products Table -->
+        <!-- Products Table Card -->
         <div class="card">
             <div class="card-body p-0">
                 <div class="text-center p-5" v-if="isLoading">
@@ -58,7 +61,7 @@
                 </div>
 
                 <div class="table-responsive" v-else>
-                    <table v-if="products.length > 0" class="table table-hover mb-0 align-middle product-table">
+                    <table v-if="products.length > 0" class="table table-hover mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
                                 <th>ID</th>
@@ -91,7 +94,7 @@
                                     </span>
                                 </td>
                                 <td>
-                                    <div class="d-flex gap-1">
+                                    <div class="d-flex gap-1 action-buttons">
                                         <button class="btn btn-sm btn-outline-info" @click="openEditModal(product)">
                                             <i class="fas fa-edit"></i>
                                         </button>
@@ -111,8 +114,8 @@
 
                 <!-- Pagination -->
                 <div v-if="pagination.last_page > 1"
-                    class="d-flex justify-content-between align-items-center mt-4 px-3 pb-3">
-                    <div class="text-muted">
+                    class="d-flex justify-content-between align-items-center mt-4 px-3 pb-3 pagination-wrap">
+                    <div class="text-muted small">
                         Showing {{ pagination.from }} to {{ pagination.to }} of {{ pagination.total }}
                     </div>
                     <ul class="pagination mb-0">
@@ -131,7 +134,7 @@
             </div>
         </div>
 
-        <!-- Add/Edit Modal -->
+        <!-- Add/Edit Modal (responsive) -->
         <div class="modal fade" id="productModal" tabindex="-1" data-bs-backdrop="static">
             <div class="modal-dialog modal-lg">
                 <div class="modal-content">
@@ -231,8 +234,9 @@
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                        <button type="button" class="btn btn-danger" :disabled="isDeleting" @click="deleteProduct">{{
-                            isDeleting ? 'Deleting...' : 'Delete' }}</button>
+                        <button type="button" class="btn btn-danger" :disabled="isDeleting" @click="deleteProduct">
+                            {{ isDeleting ? 'Deleting...' : 'Delete' }}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -244,6 +248,7 @@
 import { reactive, ref, onMounted, computed } from 'vue'
 import api from '@/utils/axios'
 
+// Reactive state
 const products = ref([])
 const brands = ref([])
 const categories = ref([])
@@ -466,21 +471,117 @@ onMounted(() => { loadProducts(); loadBrands(); loadCategories() })
 </script>
 
 <style scoped>
-.product-table {
-    min-width: 900px;
+/* ===== BASE LAYOUT ===== */
+.product-index {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
 }
 
-.product-image {
-    object-fit: cover;
+/* ===== HEADER ===== */
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 16px;
 }
 
+.header h2 {
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 0;
+}
+
+.header p {
+    color: var(--muted);
+    font-size: 13px;
+    margin: 4px 0 0;
+}
+
+/* ===== FILTER GRID (responsive) ===== */
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-item label {
+    margin-bottom: 0.25rem;
+    color: var(--text);
+}
+
+.filter-button {
+    display: flex;
+    flex-direction: column;
+}
+
+/* ===== TABLE ===== */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.table {
+    min-width: 800px;
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table th {
+    text-align: left;
+    font-size: 12px;
+    color: var(--muted);
+    padding: 12px 10px;
+    background-color: var(--card);
+}
+
+.table td {
+    padding: 10px;
+    border-top: 1px solid var(--border);
+    color: var(--text);
+    background-color: var(--card);
+}
+
+/* Badge styles (light mode) */
+.badge {
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: inline-block;
+}
+
+.badge.bg-success {
+    background-color: #dcfce7 !important;
+    color: #166534;
+}
+
+.badge.bg-secondary {
+    background-color: #e2e8f0 !important;
+    color: #1e293b;
+}
+
+/* Dark mode overrides */
+.dark .badge.bg-success {
+    background-color: #14532d !important;
+    color: #bbf7d0;
+}
+
+.dark .badge.bg-secondary {
+    background-color: #334155 !important;
+    color: #e2e8f0;
+}
+
+/* Product image placeholder */
 .product-image-placeholder {
     width: 50px;
     height: 50px;
     border-radius: 0.375rem;
-    background: #f8fafc;
-    border: 1px solid #e2e8f0;
-    color: #64748b;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
     font-size: 0.7rem;
     display: flex;
     align-items: center;
@@ -488,9 +589,71 @@ onMounted(() => { loadProducts(); loadBrands(); loadCategories() })
     text-align: center;
     padding: 0.25rem;
 }
+
+/* Action buttons */
+.action-buttons {
+    gap: 0.5rem;
+}
+
+.btn-sm {
+    min-width: 32px;
+}
+
+/* Pagination responsive wrap */
+.pagination-wrap {
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width: 768px) {
+    .product-index {
+        gap: 16px;
+    }
+
+    .header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .add-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .filter-button {
+        margin-top: 0;
+    }
+
+    .table th,
+    .table td {
+        padding: 8px 6px;
+        font-size: 12px;
+    }
+
+    .badge {
+        font-size: 10px;
+        padding: 2px 6px;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .modal-dialog {
+        margin: 0.5rem;
+        max-width: calc(100% - 1rem);
+    }
+}
 </style>
 
 <style>
+/* Global toast styles (already present, keep as is) */
 .app-toast {
     position: fixed;
     top: 20px;
