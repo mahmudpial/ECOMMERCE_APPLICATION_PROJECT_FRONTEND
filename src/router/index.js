@@ -1,8 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginView from '@/views/admin/Login.vue'
-import AdminMaster from '@/components/admin/AdminMaster.vue' // My layout
-
-// Page components (without layout wrapper)
+import AdminMaster from '@/layout/AdminMaster.vue'
 import DashboardView from '@/views/admin/Dashboard.vue'
 import ProductIndex from '@/components/admin/ProductIndex.vue'
 import CategoriesIndex from '@/components/admin/CategoriesIndex.vue'
@@ -10,7 +8,10 @@ import BrandsIndex from '@/components/admin/BrandsIndex.vue'
 import OrdersIndex from '@/components/admin/OrdersIndex.vue'
 import UsersIndex from '@/components/admin/UsersIndex.vue'
 import { useAuthStore } from '@/stores/auth'
+import { useCustomerAuthStore } from '@/stores/customerAuth' // ✅ added import
+
 const routes = [
+  // Admin routes
   {
     path: '/admin/login',
     name: 'admin.login',
@@ -22,37 +23,63 @@ const routes = [
     component: AdminMaster,
     meta: { requireAuth: true },
     children: [
+      { path: 'dashboard', name: 'admin.dashboard', component: DashboardView },
+      { path: 'product-manage', name: 'admin.products', component: ProductIndex },
+      { path: 'categories', name: 'admin.categories', component: CategoriesIndex },
+      { path: 'brands', name: 'admin.brands', component: BrandsIndex },
+      { path: 'orders', name: 'admin.orders', component: OrdersIndex },
+      { path: 'users', name: 'admin.users', component: UsersIndex },
+      // { path: '', redirect: 'dashboard' }, // optional redirect
+    ],
+  },
+
+  // Customer routes (storefront)
+  {
+    path: '/',
+    component: () => import('@/layout/CustomerLayout.vue'),
+    children: [
+      { path: '', name: 'home', component: () => import('@/views/customer/Home.vue') },
       {
-        path: 'dashboard',
-        name: 'admin.dashboard',
-        component: DashboardView,
+        path: 'product/:id',
+        name: 'product.detail',
+        component: () => import('@/views/customer/ProductDetail.vue'),
+      },
+      { path: 'cart', name: 'cart', component: () => import('@/views/customer/Cart.vue') },
+      {
+        path: 'checkout',
+        name: 'checkout',
+        component: () => import('@/views/customer/Checkout.vue'),
+        meta: { requiresAuth: true },
       },
       {
-        path: 'product-manage',
-        name: 'admin.products',
-        component: ProductIndex,
+        path: 'order/success',
+        name: 'order.success',
+        component: () => import('@/views/customer/OrderSuccess.vue'),
       },
       {
-        path: 'categories',
-        name: 'admin.categories',
-        component: CategoriesIndex,
+        path: 'login',
+        name: 'login',
+        component: () => import('@/views/customer/Login.vue'),
+        meta: { requiresGuest: true },
       },
       {
-        path: 'brands',
-        name: 'admin.brands',
-        component: BrandsIndex,
+        path: 'register',
+        name: 'register',
+        component: () => import('@/views/customer/Register.vue'),
+        meta: { requiresGuest: true },
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('@/views/customer/Profile.vue'),
+        meta: { requiresAuth: true },
       },
       {
         path: 'orders',
-        name: 'admin.orders',
-        component: OrdersIndex,
+        name: 'orders',
+        component: () => import('@/views/customer/OrderHistory.vue'),
+        meta: { requiresAuth: true },
       },
-      {
-        path: 'Users',
-        name: 'admin.users',
-        component: UsersIndex,
-      },
-      { path: '', redirect: 'dashboard' }, // /admin redirects to dashboard
     ],
   },
 ]
@@ -62,17 +89,32 @@ const router = createRouter({
   routes,
 })
 
-router.beforeEach((to, _from) => {
+// Combined navigation guard for both admin and customer
+router.beforeEach((to, from, next) => {
   const authStore = useAuthStore()
-  const isAuthenticated = authStore.isAuthenticated
+  const customerAuth = useCustomerAuthStore()
+  const isAdminAuthenticated = authStore.isAuthenticated
+  const isCustomerAuthenticated = customerAuth.isAuthenticated
 
-  if (to.meta.requireAuth && !isAuthenticated) {
-    return '/admin/login'
+  // Admin guest guard (login page)
+  if (to.meta.requireGuest && isAdminAuthenticated) {
+    return next('/admin/dashboard')
   }
-  if (to.meta.requireGuest && isAuthenticated) {
-    return '/admin/dashboard'
+  // Admin auth guard
+  if (to.meta.requireAuth && !isAdminAuthenticated) {
+    return next('/admin/login')
   }
-  return true
+
+  // Customer auth guard (for routes like checkout, profile, orders)
+  if (to.meta.requiresAuth && !isCustomerAuthenticated) {
+    return next('/login')
+  }
+  // Customer guest guard (login/register pages)
+  if ((to.path === '/login' || to.path === '/register') && isCustomerAuthenticated) {
+    return next('/profile')
+  }
+
+  next()
 })
 
 export default router
