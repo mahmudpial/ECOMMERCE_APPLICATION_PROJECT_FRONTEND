@@ -17,12 +17,13 @@
                     <div class="phone-input">
                         <select v-model="countryCode" class="country-code">
                             <option value="+880">🇧🇩 +880</option>
-                            <option value="+91">🇮🇳 +91</option>
-                            <option value="+1">🇺🇸 +1</option>
                         </select>
                         <input type="tel" v-model="mobileNumber" placeholder="1712345678" required
                             :disabled="loading" />
                     </div>
+                    <small class="phone-hint">
+                        Enter the same mobile number format saved in your account. Do not include the country code.
+                    </small>
                 </div>
                 <button type="submit" class="btn-primary" :disabled="loading">
                     <i v-if="loading" class="fas fa-spinner fa-spin"></i>
@@ -95,6 +96,13 @@ const startCooldown = (seconds = 60) => {
     }, 1000)
 }
 
+const buildIdentifier = () => {
+    // The backend looks up the account by the saved mobile value in the users table.
+    // Sending a country-code-prefixed number here can break the match if the DB stores
+    // the raw local digits (for example: 01712345678 or 1712345678).
+    return mobileNumber.value.replace(/\D/g, '')
+}
+
 const handleOtpInput = (idx, event) => {
     const val = event.target.value.replace(/\D/g, '')
     if (val.length) {
@@ -120,8 +128,11 @@ const requestOtp = async () => {
     successMessage.value = ''
 
     try {
-        const fullNumber = countryCode.value + mobileNumber.value.replace(/\D/g, '')
-        await api.post('auth/login/request-otp', { mobile: fullNumber })
+        const identifier = buildIdentifier()
+        await api.post('auth/login/request-otp', {
+            mobile: identifier,
+            identifier,
+        })
         otpRequested.value = true
         successMessage.value = 'OTP sent to your mobile number'
         startCooldown()
@@ -146,9 +157,10 @@ const verifyOtp = async () => {
     successMessage.value = ''
 
     try {
-        const fullNumber = countryCode.value + mobileNumber.value.replace(/\D/g, '')
+        const identifier = buildIdentifier()
         const response = await api.post('auth/login/verify-otp', {
-            mobile: fullNumber,
+            mobile: identifier,
+            identifier,
             otp: otp,
         })
         // Login successful – store token and user
@@ -237,6 +249,14 @@ onUnmounted(() => {
     border-radius: 0.75rem;
     padding: 0.75rem;
     color: var(--text);
+}
+
+.phone-hint {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.82rem;
+    line-height: 1.4;
+    color: var(--text-muted);
 }
 
 .phone-input input:focus,

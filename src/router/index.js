@@ -113,7 +113,7 @@ router.beforeEach((to, from, next) => {
 
   // Customer auth guard (for routes like checkout, profile, orders)
   if (to.meta.requiresAuth && !isCustomerAuthenticated) {
-    return next('/login')
+    return next({ path: '/login', query: { redirect: to.fullPath } })
   }
   // Customer guest guard (login/register pages)
   if ((to.path === '/login' || to.path === '/register') && isCustomerAuthenticated) {

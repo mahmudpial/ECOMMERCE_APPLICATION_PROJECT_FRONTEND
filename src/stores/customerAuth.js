@@ -23,7 +23,12 @@ export const useCustomerAuthStore = defineStore('customerAuth', {
     // Alternative: full login flow (if you want to avoid separate API call in component)
     async loginWithOtp(credentials) {
       try {
-        const res = await api.post('auth/login/verify-otp', credentials)
+        const identifier = (credentials.identifier ?? credentials.mobile ?? '').replace(/\D/g, '')
+        const res = await api.post('auth/login/verify-otp', {
+          ...credentials,
+          mobile: identifier,
+          identifier,
+        })
         return this.login(res.data)
       } catch (error) {
         console.error(error)
@@ -36,6 +41,10 @@ export const useCustomerAuthStore = defineStore('customerAuth', {
       this.isAuthenticated = false
       localStorage.removeItem('customer_token')
       localStorage.removeItem('customer_user')
+      localStorage.removeItem('customer_orders')
+      localStorage.removeItem('customer_last_order')
+      localStorage.removeItem('customer_checkout_draft')
+      localStorage.removeItem('customer_profile')
     },
     loadUser() {
       const stored = localStorage.getItem('customer_user')

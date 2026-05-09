@@ -5,7 +5,10 @@
         </router-link>
         <div class="product-info">
             <router-link :to="`/product/${product.id}`" class="title">{{ product.name }}</router-link>
-            <p class="price">৳{{ product.price }}</p>
+            <div class="price-row">
+                <p class="price">৳{{ formatMoney(displayPrice) }}</p>
+                <span v-if="hasDiscount" class="old-price">৳{{ formatMoney(originalPrice) }}</span>
+            </div>
             <button class="add-to-cart" @click="addToCart">
                 <i class="fas fa-cart-plus"></i> Add to Cart
             </button>
@@ -14,10 +17,20 @@
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { useCartStore } from '@/stores/cart'
+import { formatMoney, getEffectiveProductPrice } from '@/utils/customerCommerce'
 
 const props = defineProps(['product'])
 const cartStore = useCartStore()
+
+const displayPrice = computed(() => getEffectiveProductPrice(props.product))
+const originalPrice = computed(() => {
+    const regular = Number(props.product?.price || 0)
+    const discounted = Number(props.product?.discount_price || 0)
+    return discounted > 0 && discounted < regular ? regular : 0
+})
+const hasDiscount = computed(() => originalPrice.value > displayPrice.value)
 
 const getProductImage = (product) => {
     let images = product.images
@@ -26,7 +39,6 @@ const getProductImage = (product) => {
             images = JSON.parse(images)
         } catch (e) {
             /* If parsing fails, fallback to original string */
-
         }
     }
     if (Array.isArray(images) && images.length) return images[0]
@@ -93,7 +105,20 @@ const addToCart = () => {
     font-size: 1.25rem;
     font-weight: 700;
     color: var(--primary);
+    margin-bottom: 0;
+}
+
+.price-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.5rem;
     margin-bottom: 0.75rem;
+}
+
+.old-price {
+    color: var(--text-muted);
+    text-decoration: line-through;
+    font-size: 0.9rem;
 }
 
 .add-to-cart {
