@@ -7,8 +7,13 @@
                     <i class="fas fa-shopping-cart me-2 text-primary"></i>
                     Order Management
                 </h2>
-                <p>Manage customer orders</p>
+                <p>Track order numbers, customer contact details, payments, and status changes.</p>
             </div>
+        </div>
+
+        <div v-if="loadError" class="alert alert-danger mb-0">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            {{ loadError }}
         </div>
 
         <!-- Search & Filter Card (responsive grid) -->
@@ -16,8 +21,8 @@
             <div class="card-body">
                 <div class="filter-grid">
                     <div class="filter-item">
-                        <label class="form-label">Search Order ID</label>
-                        <input type="text" class="form-control" placeholder="Search by order ID..."
+                        <label class="form-label">Search Order</label>
+                        <input type="text" class="form-control" placeholder="Search by order no, phone, or transaction..."
                             v-model="searchKeyword">
                     </div>
                     <div class="filter-item">
@@ -54,19 +59,37 @@
                     <table class="table table-hover mb-0 align-middle">
                         <thead class="table-light">
                             <tr>
-                                <th>Order ID</th>
+                                <th>Order No.</th>
                                 <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Payment</th>
+                                <th>Transaction ID</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Date</th>
-                                <th style="width: 80px;">Action</th>
+                                <th style="width: 120px;">Action</th>
                             </tr>
                         </thead>
                         <tbody>
                             <tr v-for="order in orders" :key="order.id">
-                                <td>#{{ order.id }}</td>
-                                <td>{{ order.customer_name }}</td>
-                                <td>৳ {{ order.total }}</td>
+                                <td>
+                                    <div class="fw-semibold">#{{ order.order_number || order.id }}</div>
+                                    <div class="text-muted small">ID {{ order.id }}</div>
+                                </td>
+                                <td>
+                                    <div class="fw-semibold">{{ order.customer_name || '-' }}</div>
+                                    <div class="text-muted small">{{ order.customer_email || '-' }}</div>
+                                </td>
+                                <td>{{ order.customer_phone || '-' }}</td>
+                                <td>
+                                    <span class="badge" :class="getPaymentBadge(order.payment_method)">
+                                        {{ order.payment_label || order.payment_method || '-' }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <code class="transaction-code">{{ order.transaction_id || '-' }}</code>
+                                </td>
+                                <td>৳ {{ formatMoney(order.total) }}</td>
                                 <td>
                                     <span :class="getStatusBadge(order.status || order.order_status)">
                                         {{ order.status || order.order_status }}
@@ -77,7 +100,7 @@
                                     <button class="btn btn-sm btn-outline-info" @click="openOrderDetail(order)"
                                         title="View details">
                                         <i class="fas fa-eye"></i>
-                                        <span class="d-none d-md-inline ms-1">View</span>
+                                        <span class="d-none d-md-inline ms-1">Manage</span>
                                     </button>
                                 </td>
                             </tr>
@@ -123,7 +146,7 @@
 
         <!-- Order Detail Modal (responsive) -->
         <div class="modal fade" id="orderDetailModal" tabindex="-1" data-bs-backdrop="static">
-            <div class="modal-dialog modal-lg modal-dialog-scrollable">
+            <div class="modal-dialog modal-xl modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header">
                         <h5 class="modal-title">
@@ -133,53 +156,135 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                     </div>
                     <div class="modal-body" v-if="selectedOrder">
-                        <div class="row g-3">
-                            <div class="col-12 col-md-6">
-                                <div class="text-muted small">Order ID</div>
-                                <div class="fw-semibold">#{{ selectedOrder.id }}</div>
+                        <div class="detail-loading" v-if="detailLoading">
+                            <div class="spinner-border text-primary"></div>
+                            <p class="mb-0 mt-3 text-muted">Refreshing order details...</p>
+                        </div>
+
+                        <div class="summary-grid">
+                            <div class="summary-card">
+                                <span class="summary-label">Order Number</span>
+                                <strong>#{{ selectedOrder.order_number || selectedOrder.id }}</strong>
+                                <small class="text-muted">Internal ID {{ selectedOrder.id }}</small>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <div class="text-muted small">Customer</div>
-                                <div class="fw-semibold">{{ selectedOrder.customer_name }}</div>
+                            <div class="summary-card">
+                                <span class="summary-label">Customer</span>
+                                <strong>{{ selectedOrder.customer_name || '-' }}</strong>
+                                <small class="text-muted">{{ selectedOrder.customer_email || '-' }}</small>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <div class="text-muted small">Phone</div>
-                                <div class="fw-semibold">{{ selectedOrder.customer_phone || '-' }}</div>
+                            <div class="summary-card">
+                                <span class="summary-label">Phone</span>
+                                <strong>{{ selectedOrder.customer_phone || '-' }}</strong>
+                                <small class="text-muted">Customer contact number</small>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <div class="text-muted small">Email</div>
-                                <div class="fw-semibold">{{ selectedOrder.customer_email || '-' }}</div>
+                            <div class="summary-card">
+                                <span class="summary-label">Payment Method</span>
+                                <strong>{{ selectedOrder.payment_label || selectedOrder.payment_method || '-' }}</strong>
+                                <small class="text-muted">Method used at checkout</small>
                             </div>
-                            <div class="col-12 col-md-4">
-                                <div class="text-muted small">Subtotal</div>
-                                <div class="fw-semibold">৳{{ selectedOrder.subtotal ?? '-' }}</div>
+                            <div class="summary-card">
+                                <span class="summary-label">Transaction ID</span>
+                                <strong class="transaction-code">{{ selectedOrder.transaction_id || '-' }}</strong>
+                                <small class="text-muted">Gateway reference</small>
                             </div>
-                            <div class="col-12 col-md-4">
-                                <div class="text-muted small">Discount</div>
-                                <div class="fw-semibold">৳{{ selectedOrder.discount ?? '0' }}</div>
+                            <div class="summary-card">
+                                <span class="summary-label">Created</span>
+                                <strong>{{ formatDate(selectedOrder.created_at) }}</strong>
+                                <small class="text-muted">Last updated {{ formatDate(selectedOrder.updated_at) }}</small>
                             </div>
-                            <div class="col-12 col-md-4">
-                                <div class="text-muted small">Total</div>
-                                <div class="fw-semibold text-primary fs-5">৳{{ selectedOrder.total }}</div>
+                        </div>
+
+                        <div class="detail-panels">
+                            <div class="detail-panel">
+                                <div class="detail-panel-title">Payment & Status</div>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-4">
+                                        <div class="text-muted small">Payment Status</div>
+                                        <div class="fw-semibold">
+                                            <span :class="getPaymentStateBadge(selectedOrder.payment_status)">
+                                                {{ selectedOrder.payment_status || '-' }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <div class="text-muted small">Order Status</div>
+                                        <div class="fw-semibold">
+                                            <span :class="getStatusBadge(currentOrderStatus)">
+                                                {{ currentOrderStatus }}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <label class="form-label mb-1">Update Status</label>
+                                        <select v-model="editableStatus" class="form-select">
+                                            <option v-for="item in statusOptions" :key="item.value" :value="item.value">
+                                                {{ item.label }}
+                                            </option>
+                                        </select>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <div class="text-muted small">Payment Status</div>
-                                <div class="fw-semibold">{{ selectedOrder.payment_status || '-' }}</div>
+
+                            <div class="detail-panel">
+                                <div class="detail-panel-title">Order Summary</div>
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-3">
+                                        <div class="text-muted small">Subtotal</div>
+                                        <div class="fw-semibold">৳{{ formatMoney(selectedOrder.subtotal) }}</div>
+                                    </div>
+                                    <div class="col-12 col-md-3">
+                                        <div class="text-muted small">Shipping</div>
+                                        <div class="fw-semibold">৳{{ formatMoney(selectedOrder.shipping_cost) }}</div>
+                                    </div>
+                                    <div class="col-12 col-md-3">
+                                        <div class="text-muted small">Discount</div>
+                                        <div class="fw-semibold">৳{{ formatMoney(selectedOrder.discount) }}</div>
+                                    </div>
+                                    <div class="col-12 col-md-3">
+                                        <div class="text-muted small">Total</div>
+                                        <div class="fw-semibold text-primary fs-5">৳{{ formatMoney(selectedOrder.total) }}</div>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="text-muted small mb-1">Shipping Address</div>
+                                        <div class="detail-box">{{ selectedOrder.shipping_address || '-' }}</div>
+                                    </div>
+                                </div>
                             </div>
-                            <div class="col-12 col-md-6">
-                                <div class="text-muted small">Order Status</div>
-                                <span :class="getStatusBadge(selectedOrder.status || selectedOrder.order_status)">
-                                    {{ selectedOrder.status || selectedOrder.order_status }}
-                                </span>
-                            </div>
-                            <div class="col-12">
-                                <div class="text-muted small">Date</div>
-                                <div class="fw-semibold">{{ formatDate(selectedOrder.created_at) }}</div>
+                        </div>
+
+                        <div class="detail-panel" v-if="selectedOrder.items && selectedOrder.items.length">
+                            <div class="detail-panel-title">Order Items</div>
+                            <div class="table-responsive modal-table">
+                                <table class="table table-sm align-middle mb-0">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Product</th>
+                                            <th class="text-end">Price</th>
+                                            <th class="text-center">Qty</th>
+                                            <th class="text-end">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr v-for="item in selectedOrder.items" :key="item.id || `${item.product_id}-${item.product_name}`">
+                                            <td>
+                                                <div class="fw-semibold">{{ item.product_name || item.name || '-' }}</div>
+                                            </td>
+                                            <td class="text-end">৳{{ formatMoney(item.price) }}</td>
+                                            <td class="text-center">{{ item.quantity }}</td>
+                                            <td class="text-end">৳{{ formatMoney(item.total) }}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
                     <div class="modal-footer">
                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="button" class="btn btn-primary" @click="saveOrderStatus"
+                            :disabled="savingStatus || detailLoading || !selectedOrder || editableStatus === currentOrderStatus">
+                            <span v-if="savingStatus" class="spinner-border spinner-border-sm me-2"></span>
+                            Save Status
+                        </button>
                     </div>
                 </div>
             </div>
@@ -193,9 +298,13 @@ import api from '@/utils/axios'
 
 const orders = ref([])
 const isLoading = ref(false)
+const detailLoading = ref(false)
+const savingStatus = ref(false)
+const loadError = ref('')
 const searchKeyword = ref('')
 const selectedStatus = ref('')
 const selectedOrder = ref(null)
+const editableStatus = ref('pending')
 const pagination = ref({
     current_page: 1,
     last_page: 1,
@@ -204,6 +313,16 @@ const pagination = ref({
     total: 0,
     per_page: 20,
 })
+
+const statusOptions = [
+    { value: 'pending', label: 'Pending' },
+    { value: 'processing', label: 'Processing' },
+    { value: 'shipped', label: 'Shipped' },
+    { value: 'delivered', label: 'Delivered' },
+    { value: 'cancelled', label: 'Cancelled' },
+]
+
+const currentOrderStatus = computed(() => selectedOrder.value?.status || selectedOrder.value?.order_status || 'pending')
 
 // Status badge classes (light mode defaults, dark mode overrides provided in CSS)
 const getStatusBadge = (status) => {
@@ -217,6 +336,33 @@ const getStatusBadge = (status) => {
     return badges[status] || 'badge bg-secondary text-white'
 }
 
+const getPaymentStateBadge = (status) => {
+    const value = String(status || '').toLowerCase()
+    if (value === 'paid') return 'badge bg-success text-white'
+    if (value === 'failed') return 'badge bg-danger text-white'
+    if (value === 'refunded') return 'badge bg-secondary text-white'
+    return 'badge bg-warning text-dark'
+}
+
+const getPaymentBadge = (method) => {
+    const value = String(method || '').toLowerCase()
+    const badges = {
+        cod: 'bg-warning text-dark',
+        bkash: 'bg-danger text-white',
+        card: 'bg-primary text-white',
+        sslcommerz: 'bg-info text-white',
+    }
+    return badges[value] || 'bg-secondary text-white'
+}
+
+const formatMoney = (value) => {
+    const amount = Number(value ?? 0)
+    return amount.toLocaleString('en-BD', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })
+}
+
 const formatDate = (date) => {
     if (!date) return '-'
     return new Date(date).toLocaleDateString('en-US', {
@@ -226,18 +372,116 @@ const formatDate = (date) => {
     })
 }
 
+const getModal = (id) => {
+    const element = document.getElementById(id)
+    if (!element || !window.bootstrap?.Modal) return null
+    return window.bootstrap.Modal.getOrCreateInstance(element)
+}
+
+const showToast = (message, type = 'success') => {
+    const existing = document.querySelector('.app-toast')
+    if (existing) existing.remove()
+
+    const toast = document.createElement('div')
+    toast.className = `app-toast app-toast--${type}`
+    toast.innerHTML = `<i class="fas fa-${type === 'success' ? 'check-circle' : 'exclamation-circle'} me-2"></i>${message}`
+    Object.assign(toast.style, {
+        position: 'fixed',
+        top: '20px',
+        right: '20px',
+        zIndex: '9999',
+        minWidth: '300px',
+        padding: '1rem 1.25rem',
+        borderRadius: '8px',
+        fontWeight: '500',
+        display: 'flex',
+        alignItems: 'center',
+        boxShadow: '0 10px 25px rgba(0, 0, 0, 0.2)',
+        opacity: '0',
+        transform: 'translateX(110%)',
+        transition: '0.3s',
+        background:
+            type === 'success'
+                ? 'linear-gradient(135deg, #10b981, #059669)'
+                : 'linear-gradient(135deg, #ef4444, #dc2626)',
+        color: 'white',
+    })
+
+    document.body.appendChild(toast)
+    setTimeout(() => {
+        toast.style.opacity = '1'
+        toast.style.transform = 'translateX(0)'
+    }, 10)
+
+    setTimeout(() => {
+        toast.style.opacity = '0'
+        toast.style.transform = 'translateX(110%)'
+        setTimeout(() => toast.remove(), 300)
+    }, type === 'success' ? 3000 : 5000)
+}
+
 // Open order detail modal
-const openOrderDetail = (order) => {
-    selectedOrder.value = order
-    const modalEl = document.getElementById('orderDetailModal')
-    if (modalEl && window.bootstrap?.Modal) {
-        window.bootstrap.Modal.getOrCreateInstance(modalEl).show()
+const openOrderDetail = async (order) => {
+    selectedOrder.value = { ...order }
+    editableStatus.value = order.status || order.order_status || 'pending'
+    getModal('orderDetailModal')?.show()
+    detailLoading.value = true
+
+    try {
+        const { data } = await api.get(`admin/orders/${order.id}`)
+        const detail = data.order || data.data || data
+
+        if (detail) {
+            selectedOrder.value = detail
+            editableStatus.value = detail.status || detail.order_status || editableStatus.value
+        }
+    } catch (error) {
+        console.error('Failed to load order detail:', error)
+        showToast(error.response?.data?.message || 'Failed to load order details', 'error')
+    } finally {
+        detailLoading.value = false
+    }
+}
+
+const saveOrderStatus = async () => {
+    if (!selectedOrder.value) return
+
+    if (editableStatus.value === currentOrderStatus.value) {
+        return
+    }
+
+    savingStatus.value = true
+    try {
+        const { data } = await api.patch(`admin/orders/${selectedOrder.value.id}`, {
+            order_status: editableStatus.value,
+        })
+
+        const updatedOrder = data.order || data.data || data
+        if (updatedOrder) {
+            selectedOrder.value = updatedOrder
+            editableStatus.value = updatedOrder.status || updatedOrder.order_status || editableStatus.value
+            orders.value = orders.value.map((item) =>
+                item.id === updatedOrder.id
+                    ? { ...item, ...updatedOrder }
+                    : item,
+            )
+        }
+
+        showToast('Order status updated')
+        getModal('orderDetailModal')?.hide()
+        await loadOrders(pagination.value.current_page)
+    } catch (error) {
+        console.error('Failed to update order status:', error)
+        showToast(error.response?.data?.message || 'Failed to update order status', 'error')
+    } finally {
+        savingStatus.value = false
     }
 }
 
 // Load orders from API
 const loadOrders = async (page = 1) => {
     isLoading.value = true
+    loadError.value = ''
     try {
         const params = { page }
         if (searchKeyword.value) params.search = searchKeyword.value
@@ -256,6 +500,8 @@ const loadOrders = async (page = 1) => {
     } catch (error) {
         console.error('Orders loading error:', error)
         orders.value = []
+        loadError.value = error.response?.data?.message || 'Unable to load orders right now.'
+        showToast(loadError.value, 'error')
     } finally {
         isLoading.value = false
     }
@@ -330,6 +576,78 @@ onMounted(() => {
     margin: 4px 0 0;
 }
 
+.transaction-code {
+    font-size: 12px;
+    white-space: nowrap;
+}
+
+.detail-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 24px 0 12px;
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.summary-card,
+.detail-panel {
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: var(--card);
+    padding: 16px;
+}
+
+.summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.summary-label,
+.detail-panel-title {
+    font-size: 12px;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.detail-panels {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.detail-panel-title {
+    margin-bottom: 12px;
+}
+
+.detail-box {
+    border: 1px dashed var(--border);
+    border-radius: 12px;
+    padding: 12px 14px;
+    background: rgba(0, 0, 0, 0.02);
+    color: var(--text);
+    line-height: 1.6;
+}
+
+.modal-table {
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.modal-table .table {
+    min-width: 100%;
+}
+
 /* ===== FILTER GRID (responsive) ===== */
 .filter-grid {
     display: grid;
@@ -355,7 +673,7 @@ onMounted(() => {
 }
 
 .table {
-    min-width: 700px;
+    min-width: 1200px;
     width: 100%;
     border-collapse: collapse;
 }
@@ -403,6 +721,14 @@ onMounted(() => {
         margin-top: 0;
     }
 
+    .summary-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .detail-panels {
+        grid-template-columns: 1fr;
+    }
+
     .table th,
     .table td {
         padding: 8px 6px;
@@ -427,6 +753,10 @@ onMounted(() => {
     .modal-dialog {
         margin: 0.5rem;
         max-width: calc(100% - 1rem);
+    }
+
+    .detail-loading {
+        padding-top: 12px;
     }
 }
 </style>

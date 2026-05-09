@@ -41,8 +41,6 @@ export const useCustomerAuthStore = defineStore('customerAuth', {
       this.isAuthenticated = false
       localStorage.removeItem('customer_token')
       localStorage.removeItem('customer_user')
-      localStorage.removeItem('customer_orders')
-      localStorage.removeItem('customer_last_order')
       localStorage.removeItem('customer_checkout_draft')
       localStorage.removeItem('customer_profile')
     },

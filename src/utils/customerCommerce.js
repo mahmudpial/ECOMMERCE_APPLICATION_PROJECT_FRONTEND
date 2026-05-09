@@ -1,5 +1,3 @@
-const ORDER_STORAGE_KEY = 'customer_orders'
-const LAST_ORDER_STORAGE_KEY = 'customer_last_order'
 const CHECKOUT_DRAFT_STORAGE_KEY = 'customer_checkout_draft'
 const PROFILE_STORAGE_KEY = 'customer_profile'
 
@@ -92,23 +90,6 @@ export const getProductImages = (product) => {
 export const getProductImage = (product) => {
     const images = getProductImages(product)
     return images[0] || 'https://via.placeholder.com/900x900?text=No+Image'
-}
-
-export const getAccountKey = (user) => {
-    if (!user) return 'guest'
-
-    if (user.id || user.id === 0) return `id:${user.id}`
-
-    const mobile = normalizePhone(user.mobile || user.phone || '')
-    if (mobile) return `mobile:${mobile}`
-
-    const email = String(user.email || '').trim().toLowerCase()
-    if (email) return `email:${email}`
-
-    const name = String(user.name || '').trim().toLowerCase()
-    if (name) return `name:${name}`
-
-    return 'guest'
 }
 
 export const deliveryOptions = [
@@ -248,147 +229,6 @@ export const getPaymentMeta = (status = 'pending') => {
     }
 
     return map[key] || map.pending
-}
-
-export const readStoredOrders = (user = null) => {
-    const orders = safeReadJson(ORDER_STORAGE_KEY, [])
-    if (!user) return Array.isArray(orders) ? orders : []
-
-    const accountKey = getAccountKey(user)
-    return (Array.isArray(orders) ? orders : []).filter((order) => order.account_key === accountKey)
-}
-
-export const getLatestStoredOrder = (user = null) => {
-    const orders = readStoredOrders(user)
-    return orders[0] || null
-}
-
-export const findStoredOrder = (orderId, user = null) => {
-    if (!orderId) return null
-
-    const search = String(orderId).trim()
-    const orders = readStoredOrders(user)
-    return (
-        orders.find((order) => String(order.id) === search || String(order.order_number) === search) ||
-        null
-    )
-}
-
-export const saveStoredOrder = (order) => {
-    const currentOrders = safeReadJson(ORDER_STORAGE_KEY, [])
-    const cleanedOrders = Array.isArray(currentOrders) ? currentOrders : []
-    const nextOrders = [
-        order,
-        ...cleanedOrders.filter(
-            (item) => String(item.id) !== String(order.id) && String(item.order_number) !== String(order.order_number),
-        ),
-    ]
-
-    safeWriteJson(ORDER_STORAGE_KEY, nextOrders)
-    safeWriteJson(LAST_ORDER_STORAGE_KEY, order)
-    return order
-}
-
-export const buildOrderRecord = ({
-    user = null,
-    cartItems = [],
-    form = {},
-    deliveryMethod = 'standard',
-    paymentMethod = 'cod',
-    discount = 0,
-} = {}) => {
-    const createdAt = new Date().toISOString()
-    const orderSeed = `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`.toUpperCase()
-    const orderNumber = `ORD-${orderSeed}`
-    const delivery = getDeliveryOption(deliveryMethod)
-    const payment = getPaymentOption(paymentMethod)
-    const subtotal = cartItems.reduce(
-        (sum, item) => sum + Number(item.price || 0) * Number(item.quantity || 1),
-        0,
-    )
-    const shippingFee = getShippingFee(deliveryMethod, subtotal)
-    const discountValue = Number(discount || 0)
-    const total = Math.max(0, subtotal + shippingFee - discountValue)
-    const itemCount = cartItems.reduce((sum, item) => sum + Number(item.quantity || 1), 0)
-    const shippingAddress = {
-        line1: String(form.addressLine1 || form.address || '').trim(),
-        line2: String(form.addressLine2 || '').trim(),
-        city: String(form.city || '').trim(),
-        state: String(form.state || '').trim(),
-        postcode: String(form.postcode || '').trim(),
-        country: String(form.country || 'Bangladesh').trim(),
-    }
-
-    const addressLabel = [
-        shippingAddress.line1,
-        shippingAddress.line2,
-        shippingAddress.city,
-        shippingAddress.state,
-        shippingAddress.postcode,
-        shippingAddress.country,
-    ]
-        .filter(Boolean)
-        .join(', ')
-
-    return {
-        id: orderNumber,
-        order_number: orderNumber,
-        account_key: getAccountKey(user),
-        customer_name: String(form.fullName || user?.name || 'Guest Customer').trim(),
-        customer_mobile: normalizePhone(form.mobile || user?.mobile || user?.phone || ''),
-        customer_email: String(form.email || user?.email || '').trim(),
-        status: 'processing',
-        payment_status: payment.value === 'cod' ? 'pending' : 'paid',
-        payment_method: payment.value,
-        payment_label: payment.label,
-        delivery_method: delivery.value,
-        delivery_label: delivery.label,
-        shipping_fee: shippingFee,
-        subtotal,
-        discount: discountValue,
-        total,
-        item_count: itemCount,
-        items: cartItems.map((item) => ({
-            id: item.id,
-            name: item.name,
-            price: Number(item.price || 0),
-            quantity: Number(item.quantity || 1),
-            images: item.images,
-            slug: item.slug || null,
-        })),
-        shipping_address: shippingAddress,
-        address_label: addressLabel || 'Address not provided',
-        notes: String(form.note || '').trim(),
-        created_at: createdAt,
-        updated_at: createdAt,
-        estimated_delivery: delivery.eta,
-        timeline: [
-            {
-                key: 'placed',
-                label: 'Order placed',
-                description: 'We have received your order and started processing it.',
-                timestamp: createdAt,
-            },
-            {
-                key: 'packed',
-                label: 'Packed',
-                description: 'Items are being packed and prepared for dispatch.',
-                timestamp: null,
-            },
-            {
-                key: 'shipped',
-                label: 'Shipped',
-                description: 'A courier will pick up the parcel for delivery.',
-                timestamp: null,
-            },
-            {
-                key: 'delivered',
-                label: 'Delivered',
-                description: 'Your order will arrive at the shipping address.',
-                timestamp: null,
-            },
-        ],
-    }
 }
 
 export const readCheckoutDraft = () => safeReadJson(CHECKOUT_DRAFT_STORAGE_KEY, null)

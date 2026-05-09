@@ -36,8 +36,11 @@
                     <table class="table">
                         <thead>
                             <tr>
-                                <th>ID</th>
+                                <th>Order No.</th>
                                 <th>Customer</th>
+                                <th>Phone</th>
+                                <th>Payment</th>
+                                <th>Transaction</th>
                                 <th>Total</th>
                                 <th>Status</th>
                                 <th>Date</th>
@@ -45,10 +48,16 @@
                         </thead>
                         <tbody>
                             <tr v-for="order in recentOrders" :key="order.id">
-                                <td>#{{ order.order_number }}</td>
-                                <td>{{ order.customer_name }}</td>
-                                <td>৳{{ order.total }}</td>
-                                <td><span :class="statusClass(order.order_status)">{{ order.order_status }}</span></td>
+                                <td>
+                                    <div class="fw-semibold">#{{ order.order_number || order.id }}</div>
+                                    <div class="text-muted small">ID {{ order.id }}</div>
+                                </td>
+                                <td>{{ order.customer_name || '-' }}</td>
+                                <td>{{ order.customer_phone || '-' }}</td>
+                                <td>{{ order.payment_label || order.payment_method || '-' }}</td>
+                                <td><code class="transaction-code">{{ order.transaction_id || '-' }}</code></td>
+                                <td>৳{{ formatMoney(order.total) }}</td>
+                                <td><span :class="statusClass(order.order_status || order.status)">{{ order.order_status || order.status }}</span></td>
                                 <td>{{ formatDate(order.created_at) }}</td>
                             </tr>
                         </tbody>
@@ -122,6 +131,12 @@ const statusClass = (status) => {
     }
     return map[status] || 'badge'
 }
+
+const formatMoney = (value) =>
+    Number(value ?? 0).toLocaleString('en-BD', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2,
+    })
 
 const formatDate = (d) => new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 
@@ -231,7 +246,7 @@ onMounted(load)
 .table {
     width: 100%;
     border-collapse: collapse;
-    min-width: 500px;
+    min-width: 900px;
 }
 
 .table th {
@@ -255,6 +270,11 @@ onMounted(load)
     padding: 40px;
     text-align: center;
     color: var(--muted);
+}
+
+.transaction-code {
+    font-size: 12px;
+    white-space: nowrap;
 }
 
 @media (max-width: 1024px) {
