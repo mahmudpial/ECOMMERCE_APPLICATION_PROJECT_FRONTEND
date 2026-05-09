@@ -89,19 +89,43 @@
             <div class="cart-summary">
                 <div class="summary-card">
                     <h3>Order Summary</h3>
+                    <div class="delivery-selector">
+                        <div class="delivery-selector-head">
+                            <span>Delivery method</span>
+                            <strong>{{ selectedDelivery.label }}</strong>
+                        </div>
+                        <button
+                            v-for="option in deliveryOptions"
+                            :key="option.value"
+                            type="button"
+                            class="delivery-option"
+                            :class="{ active: selectedDeliveryMethod === option.value }"
+                            @click="selectedDeliveryMethod = option.value"
+                        >
+                            <div class="delivery-option-copy">
+                                <strong>{{ option.label }}</strong>
+                                <span>{{ option.description }}</span>
+                            </div>
+                            <div class="delivery-option-meta">
+                                <strong>{{ option.fee ? `৳${formatPrice(getShippingFee(option.value, subtotal))}` : 'Free' }}</strong>
+                                <span>{{ option.eta }}</span>
+                            </div>
+                        </button>
+                    </div>
                     <div class="summary-row">
                         <span>Subtotal:</span>
                         <span>৳{{ formatPrice(subtotal) }}</span>
                     </div>
                     <div class="summary-row">
                         <span>Shipping:</span>
-                        <span>Calculated at checkout</span>
+                        <span>{{ estimatedShipping === 0 ? 'Free' : `৳${formatPrice(estimatedShipping)}` }}</span>
                     </div>
                     <div class="summary-divider"></div>
                     <div class="summary-row total">
                         <span>Total:</span>
-                        <span>৳{{ formatPrice(subtotal) }}</span>
+                        <span>৳{{ formatPrice(grandTotal) }}</span>
                     </div>
+                    <p class="summary-note">Estimated with {{ selectedDelivery.label.toLowerCase() }}. Final shipping is confirmed at checkout.</p>
                     <router-link to="/checkout" class="checkout-btn">Proceed to Checkout</router-link>
                     <router-link to="/products" class="continue-shopping">Continue Shopping</router-link>
                 </div>
@@ -111,12 +135,28 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useCartStore } from '@/stores/cart'
+import {
+    deliveryOptions,
+    getDeliveryOption,
+    getShippingFee,
+    readCheckoutDraft,
+    saveCheckoutDraft,
+} from '@/utils/customerCommerce'
 
 const cartStore = useCartStore()
 const cartItems = computed(() => cartStore.items)
 const subtotal = computed(() => cartStore.totalPrice)
+const selectedDeliveryMethod = ref('standard')
+const selectedDelivery = computed(() => getDeliveryOption(selectedDeliveryMethod.value))
+const estimatedShipping = computed(() => getShippingFee(selectedDeliveryMethod.value, subtotal.value))
+const grandTotal = computed(() => subtotal.value + estimatedShipping.value)
+
+const hydrateDeliveryMethod = () => {
+    const draft = readCheckoutDraft() || {}
+    selectedDeliveryMethod.value = draft.deliveryMethod || 'standard'
+}
 
 const getProductImage = (product) => {
     let images = product.images
@@ -142,6 +182,18 @@ const updateQuantity = (item, newQuantity) => {
 const removeItem = (productId) => {
     cartStore.removeItem(productId)
 }
+
+watch(selectedDeliveryMethod, (value) => {
+    const draft = readCheckoutDraft() || {}
+    saveCheckoutDraft({
+        ...draft,
+        deliveryMethod: value,
+    })
+})
+
+onMounted(() => {
+    hydrateDeliveryMethod()
+})
 </script>
 
 <style scoped>
@@ -333,6 +385,82 @@ const removeItem = (productId) => {
     color: var(--text);
 }
 
+.delivery-selector {
+    display: grid;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.delivery-selector-head {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: baseline;
+}
+
+.delivery-selector-head span {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+.delivery-selector-head strong {
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.delivery-option {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 1rem;
+    background: var(--bg);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.delivery-option:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--shadow);
+}
+
+.delivery-option.active {
+    border-color: var(--primary);
+    background: rgba(59, 130, 246, 0.08);
+}
+
+.delivery-option-copy {
+    display: grid;
+    gap: 0.2rem;
+}
+
+.delivery-option-copy strong {
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.delivery-option-copy span,
+.delivery-option-meta span {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.3;
+}
+
+.delivery-option-meta {
+    display: grid;
+    justify-items: end;
+    gap: 0.2rem;
+    text-align: right;
+}
+
+.delivery-option-meta strong {
+    color: var(--primary);
+    font-size: 0.95rem;
+}
+
 .summary-row {
     display: flex;
     justify-content: space-between;
@@ -380,6 +508,13 @@ const removeItem = (productId) => {
 
 .continue-shopping:hover {
     color: var(--primary);
+}
+
+.summary-note {
+    margin: 0.85rem 0 0;
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 /* Responsive */
@@ -444,6 +579,10 @@ const removeItem = (productId) => {
 
     .summary-card {
         max-width: 100%;
+    }
+
+    .delivery-option {
+        padding: 0.75rem 0.85rem;
     }
 }
 </style>

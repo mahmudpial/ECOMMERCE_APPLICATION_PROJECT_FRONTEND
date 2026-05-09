@@ -185,6 +185,59 @@
                     <div class="section-header">
                         <span class="section-kicker">5</span>
                         <div>
+                            <h2>Promo code</h2>
+                            <p>Apply a discount code to lower the order total.</p>
+                        </div>
+                    </div>
+
+                    <div class="promo-row">
+                        <label class="field promo-field">
+                            <span>Promo code</span>
+                            <input
+                                v-model="promoCodeInput"
+                                type="text"
+                                placeholder="SAVE10"
+                                autocomplete="off"
+                            />
+                        </label>
+                        <button type="button" class="promo-btn" @click="applyPromoCode">Apply</button>
+                    </div>
+
+                    <p v-if="promoMessage" class="promo-success">
+                        <i class="fas fa-circle-check"></i>
+                        {{ promoMessage }}
+                    </p>
+                    <p v-if="promoError" class="promo-error">
+                        <i class="fas fa-triangle-exclamation"></i>
+                        {{ promoError }}
+                    </p>
+
+                    <div class="promo-suggestions">
+                        <button
+                            v-for="promo in promoCodes"
+                            :key="promo.code"
+                            type="button"
+                            class="promo-chip"
+                            @click="usePromoSuggestion(promo.code)"
+                        >
+                            <strong>{{ promo.code }}</strong>
+                            <span>{{ promo.label }}</span>
+                        </button>
+                    </div>
+
+                    <div v-if="appliedPromo" class="promo-applied">
+                        <div>
+                            <strong>{{ appliedPromo.code }}</strong>
+                            <p>{{ appliedPromo.description }}</p>
+                        </div>
+                        <button type="button" class="promo-remove-btn" @click="removePromoCode">Remove</button>
+                    </div>
+                </section>
+
+                <section class="form-card">
+                    <div class="section-header">
+                        <span class="section-kicker">6</span>
+                        <div>
                             <h2>Order note</h2>
                             <p>Add delivery instructions or a short note for the courier.</p>
                         </div>
@@ -246,7 +299,7 @@
                         </div>
                         <div class="line">
                             <span>Discount</span>
-                            <strong>- ৳{{ formatMoney(discount) }}</strong>
+                            <strong>{{ promoDiscount > 0 ? `- ৳${formatMoney(promoDiscount)}` : '৳0.00' }}</strong>
                         </div>
                         <div class="line total">
                             <span>Total</span>
@@ -290,9 +343,11 @@ import api from '@/utils/axios'
 import { useCartStore } from '@/stores/cart'
 import { useCustomerAuthStore } from '@/stores/customerAuth'
 import {
+    calculatePromoDiscount,
     deliveryOptions,
     formatMoney,
     getDeliveryOption,
+    getPromoCode,
     getPaymentOption,
     getProductImage,
     getShippingFee,
@@ -300,6 +355,7 @@ import {
     paymentOptions,
     readCheckoutDraft,
     saveCheckoutDraft,
+    promoCodes,
 } from '@/utils/customerCommerce'
 
 const router = useRouter()
@@ -309,9 +365,9 @@ const authStore = useCustomerAuthStore()
 const cartItems = computed(() => cartStore.items)
 const subtotal = computed(() => cartStore.totalPrice)
 const totalItems = computed(() => cartStore.totalItems)
-const discount = computed(() => 0)
 const shippingFee = computed(() => getShippingFee(form.deliveryMethod, subtotal.value))
-const total = computed(() => Math.max(0, subtotal.value + shippingFee.value - discount.value))
+const promoDiscount = computed(() => calculatePromoDiscount(subtotal.value, appliedPromo.value))
+const total = computed(() => Math.max(0, subtotal.value + shippingFee.value - promoDiscount.value))
 const selectedDelivery = computed(() => getDeliveryOption(form.deliveryMethod))
 const selectedPayment = computed(() => getPaymentOption(form.paymentMethod))
 const freeShippingLeft = computed(() => {
@@ -322,6 +378,10 @@ const freeShippingLeft = computed(() => {
 const submitting = ref(false)
 const errorMessage = ref('')
 const successMessage = ref('')
+const promoCodeInput = ref('')
+const promoMessage = ref('')
+const promoError = ref('')
+const appliedPromo = ref(null)
 
 const form = reactive({
     fullName: '',
@@ -335,6 +395,7 @@ const form = reactive({
     country: 'Bangladesh',
     deliveryMethod: 'standard',
     paymentMethod: 'cod',
+    promoCode: '',
     note: '',
     termsAccepted: false,
 })
@@ -368,11 +429,72 @@ const hydrateForm = () => {
         country: user.country || 'Bangladesh',
         deliveryMethod: 'standard',
         paymentMethod: 'cod',
+        promoCode: '',
         note: '',
         termsAccepted: false,
     }
 
     Object.assign(form, saved, draft)
+    promoCodeInput.value = draft.promoCode || draft.promo_code || ''
+    appliedPromo.value = getPromoCode(draft.promoCode || draft.promo_code || '')
+    if (appliedPromo.value) {
+        promoMessage.value = `Promo code ${appliedPromo.value.code} is applied.`
+    }
+}
+
+const syncPromoDraft = () => {
+    saveCheckoutDraft({
+        ...form,
+        promoCode: appliedPromo.value?.code || '',
+        promoDiscount: promoDiscount.value,
+        promoLabel: appliedPromo.value?.label || '',
+        promoDescription: appliedPromo.value?.description || '',
+    })
+}
+
+const applyPromoCode = () => {
+    const code = promoCodeInput.value.trim().toUpperCase()
+
+    promoMessage.value = ''
+    promoError.value = ''
+
+    if (!code) {
+        promoError.value = 'Please enter a promo code.'
+        return
+    }
+
+    const promo = getPromoCode(code)
+    if (!promo) {
+        appliedPromo.value = null
+        promoError.value = 'Invalid promo code.'
+        syncPromoDraft()
+        return
+    }
+
+    if (promo.minSubtotal && subtotal.value < promo.minSubtotal) {
+        appliedPromo.value = null
+        promoError.value = `This code needs a minimum order of ৳${formatMoney(promo.minSubtotal)}.`
+        syncPromoDraft()
+        return
+    }
+
+    appliedPromo.value = promo
+    promoMessage.value = `Promo code ${promo.code} applied successfully.`
+    promoError.value = ''
+    syncPromoDraft()
+}
+
+const usePromoSuggestion = (code) => {
+    promoCodeInput.value = code
+    applyPromoCode()
+}
+
+const removePromoCode = () => {
+    promoCodeInput.value = ''
+    appliedPromo.value = null
+    promoMessage.value = ''
+    promoError.value = ''
+    syncPromoDraft()
 }
 
 const placeOrder = async () => {
@@ -414,6 +536,7 @@ const placeOrder = async () => {
             shipping_address: buildShippingAddress(),
             delivery_method: form.deliveryMethod,
             payment_method: form.paymentMethod,
+            promo_code: appliedPromo.value?.code || null,
             notes: String(form.note || '').trim(),
             items: cartItems.value.map((item) => ({
                 product_id: item.id,
@@ -452,10 +575,40 @@ const placeOrder = async () => {
 watch(
     form,
     () => {
-        saveCheckoutDraft({ ...form })
+        syncPromoDraft()
     },
     { deep: true },
 )
+
+watch(
+    () => subtotal.value,
+    () => {
+        if (appliedPromo.value) {
+            const promo = getPromoCode(appliedPromo.value.code)
+            if (!promo || (promo.minSubtotal && subtotal.value < promo.minSubtotal)) {
+                appliedPromo.value = null
+                promoMessage.value = ''
+                promoError.value = 'Promo code no longer meets the minimum order amount.'
+            }
+        }
+        syncPromoDraft()
+    },
+)
+
+watch(promoCodeInput, (value) => {
+    const normalized = String(value || '').trim().toUpperCase()
+
+    if (appliedPromo.value && normalized !== appliedPromo.value.code) {
+        appliedPromo.value = null
+        promoMessage.value = ''
+    }
+
+    if (!normalized) {
+        promoError.value = ''
+    }
+
+    syncPromoDraft()
+})
 
 onMounted(() => {
     hydrateForm()
@@ -837,6 +990,132 @@ onMounted(() => {
     color: #047857;
 }
 
+.promo-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0.75rem;
+    align-items: end;
+}
+
+.promo-field {
+    margin: 0;
+}
+
+.promo-field input {
+    text-transform: uppercase;
+}
+
+.promo-btn,
+.promo-remove-btn {
+    border: none;
+    border-radius: 999px;
+    padding: 0.9rem 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+}
+
+.promo-btn {
+    background: linear-gradient(135deg, var(--primary), #0ea5e9);
+    color: white;
+    box-shadow: 0 14px 28px rgba(59, 130, 246, 0.2);
+}
+
+.promo-remove-btn {
+    background: rgba(239, 68, 68, 0.1);
+    color: #b91c1c;
+}
+
+.promo-btn:hover,
+.promo-remove-btn:hover {
+    transform: translateY(-1px);
+}
+
+.promo-success,
+.promo-error {
+    margin: 0.85rem 0 0;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.55rem;
+    font-size: 0.92rem;
+    line-height: 1.5;
+}
+
+.promo-success {
+    background: rgba(16, 185, 129, 0.11);
+    color: #047857;
+}
+
+.promo-error {
+    background: rgba(239, 68, 68, 0.12);
+    color: #b91c1c;
+}
+
+.promo-suggestions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    margin-top: 0.85rem;
+}
+
+.promo-chip {
+    display: inline-grid;
+    gap: 0.15rem;
+    min-width: 135px;
+    padding: 0.75rem 0.9rem;
+    border: 1px solid var(--border);
+    border-radius: 0.95rem;
+    background: var(--bg);
+    color: var(--text);
+    cursor: pointer;
+    text-align: left;
+    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+}
+
+.promo-chip:hover {
+    transform: translateY(-1px);
+    border-color: rgba(59, 130, 246, 0.35);
+    box-shadow: var(--shadow);
+}
+
+.promo-chip strong {
+    color: var(--primary);
+    font-size: 0.92rem;
+}
+
+.promo-chip span {
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.promo-applied {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.8rem;
+    margin-top: 0.9rem;
+    padding: 0.95rem 1rem;
+    border-radius: 1rem;
+    background: rgba(59, 130, 246, 0.08);
+    border: 1px solid rgba(59, 130, 246, 0.16);
+}
+
+.promo-applied strong {
+    display: block;
+    color: var(--text);
+    margin-bottom: 0.1rem;
+}
+
+.promo-applied p {
+    margin: 0;
+    color: var(--text-muted);
+    font-size: 0.88rem;
+    line-height: 1.45;
+}
+
 .terms-row {
     display: flex;
     align-items: flex-start;
@@ -1104,6 +1383,17 @@ onMounted(() => {
     .summary-item-total {
         grid-column: 2 / -1;
         margin-left: auto;
+    }
+
+    .promo-row,
+    .promo-applied {
+        grid-template-columns: 1fr;
+        display: grid;
+    }
+
+    .promo-btn,
+    .promo-remove-btn {
+        width: 100%;
     }
 }
 </style>

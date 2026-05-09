@@ -171,6 +171,57 @@ export const getShippingFee = (deliveryMethod, subtotal = 0) => {
     return option.fee
 }
 
+export const promoCodes = [
+    {
+        code: 'SAVE10',
+        label: '10% Off',
+        description: 'Save 10% on orders over ৳1,000',
+        type: 'percent',
+        value: 10,
+        minSubtotal: 1000,
+    },
+    {
+        code: 'FLAT200',
+        label: '৳200 Off',
+        description: 'Instant ৳200 discount on orders over ৳2,000',
+        type: 'flat',
+        value: 200,
+        minSubtotal: 2000,
+    },
+    {
+        code: 'SUPER15',
+        label: '15% Off',
+        description: 'Save 15% on orders over ৳5,000',
+        type: 'percent',
+        value: 15,
+        minSubtotal: 5000,
+    },
+]
+
+export const getPromoCode = (value = '') => {
+    const search = String(value || '').trim().toUpperCase()
+    if (!search) return null
+    return promoCodes.find((promo) => promo.code === search) || null
+}
+
+export const calculatePromoDiscount = (subtotal = 0, promo = null) => {
+    const amount = Number(subtotal || 0)
+    const resolvedPromo = typeof promo === 'string' ? getPromoCode(promo) : promo
+
+    if (!resolvedPromo) return 0
+    if (resolvedPromo.minSubtotal && amount < resolvedPromo.minSubtotal) return 0
+
+    if (resolvedPromo.type === 'percent') {
+        return Math.min(amount, (amount * Number(resolvedPromo.value || 0)) / 100)
+    }
+
+    if (resolvedPromo.type === 'flat') {
+        return Math.min(amount, Number(resolvedPromo.value || 0))
+    }
+
+    return 0
+}
+
 export const getStatusMeta = (status = 'processing') => {
     const key = String(status).toLowerCase()
 
