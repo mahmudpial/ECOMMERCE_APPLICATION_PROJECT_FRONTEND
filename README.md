@@ -1,97 +1,341 @@
-# Commercia – Modern E‑commerce Frontend
+# 🛒 ECOMMERCE APPLICATION FRONTEND
 
-[![Vue 3](https://img.shields.io/badge/Vue-3-42b883?logo=vue.js)](https://vuejs.org/)
-[![Pinia](https://img.shields.io/badge/Pinia-State_Management-ffb237)](https://pinia.vuejs.org/)
-[![Vite](https://img.shields.io/badge/Vite-Bundler-646cff?logo=vite)](https://vitejs.dev/)
-
-A clean, minimalist e‑commerce frontend built with **Vue 3** and **Pinia**.  
-**Japanese minimalism** visual language with an **electric blue** accent.  
-Fully responsive, dark/light mode ready, production‑optimised.
-
-🔗 **Live preview** – *(add your deployed URL here)*
+Modern full-featured eCommerce frontend application built with Vue.js, designed for scalable online shopping experiences with authentication, cart management, order tracking, responsive UI, dark mode support, and admin-ready architecture.
 
 ---
 
 ## ✨ Features
 
-- 🧭 **Responsive navigation** – desktop menu + right‑slide mobile drawer
-- 🌗 **Dark / Light mode** – system‑aware, persists user preference
-- 🛒 **Shopping cart** – add/remove items, update quantities, see totals
-- 📦 **Product listing** – grid view with category/brand filters, search, pagination
-- 🔍 **Product detail** – image gallery, quantity selector, “buy now”, related products
-- 📝 **Checkout flow** – address & contact form, delivery & payment selection, promo codes
-- 👤 **User account** – profile management, order history, logout
-- 🔐 **Authentication** – OTP‑based login & registration (mobile number / email)
-- 📬 **Newsletter subscription** – integrated with backend API
-- ♿ **Accessibility** – focus rings, semantic HTML, touch‑friendly targets
+### 🛍 Customer Features
+
+* Product browsing
+* Product search & filtering
+* Product details page
+* Shopping cart system
+* Checkout workflow
+* Order history & tracking
+* User authentication
+* Reorder functionality
+* Dynamic order timeline
+* Responsive mobile-first design
+* Dark / Light mode support
 
 ---
 
-## 🎨 Design System
+### 🛠 Admin Features
 
-| Element        | Light Mode                     | Dark Mode                      |
-| -------------- | ------------------------------ | ------------------------------ |
-| Page background| `#F5F7FA`                      | `#0F1218`                      |
-| Card background| `#FFFFFF`                      | `#1A1E26`                      |
-| Primary text   | `#1A2A3A`                      | `#E8EDF2`                      |
-| Accent colour  | `#0066FF`                      | `#3B82F6`                      |
-
-- **Typography**: Headings & brand → **Sora**, Body & UI → **Plus Jakarta Sans**
-- **Spacing & borders**: 8‑40px border‑radius, 1.5rem core spacing, light shadows
-- **Animations**: subtle hover lifts, smooth drawer slide, fade‑in on scroll
-
----
-
-## 🛠️ Tech Stack
-
-| Area               | Technology                                      |
-| ------------------ | ----------------------------------------------- |
-| Framework          | Vue 3 (Composition API)                         |
-| Routing            | Vue Router 4                                    |
-| State Management   | Pinia (auth, cart, customerAuth)                |
-| Styling            | Scoped CSS + CSS variables + Tailwind (utils)   |
-| HTTP Client        | Axios                                           |
-| Build Tool         | Vite                                            |
-| Fonts              | Google Fonts (Sora, Plus Jakarta Sans)          |
+* Admin dashboard
+* Product management
+* Category management
+* Order management
+* Customer management
+* Inventory tracking
+* Sales analytics overview
+* Order status updates
+* Product image uploads
+* Coupon & discount management
+* Secure admin authentication
+* Responsive admin panel
+* Dashboard statistics cards
+* Search & filter system
+* Real-time order monitoring
 
 ---
 
-## 📁 Project Structure
-commercia-frontend/
-├── public/ # static assets
-├── src/
-│ ├── assets/ # images, fonts, etc.
-│ ├── components/
-│ │ ├── admin/ # admin components (Dashboard, Login, etc.)
-│ │ ├── customer/ # ProductCard.vue
-│ │ └── global/ # ErrorMessage, LoadingSpinner
-│ ├── layout/ # AdminMaster.Vue, CustomerLayout.vue
-│ ├── router/ # index.js (route definitions)
-│ ├── stores/ # auth.js, cart.js, customerAuth.js
-│ ├── utils/ # axios.js, customerCommerce.js (helpers)
-│ ├── views/
-│ │ ├── admin/ # Dashboard.vue, Login.vue
-│ │ └── customer/ # Cart, Checkout, Home, Login, OrderHistory,
-│ │ # OrderSuccess, ProductDetail, Products, Profile, Register
-│ ├── App.vue
-│ ├── main.js
-│ ├── base.css # CSS variables & resets
-│ └── main.css # entry point (imports base.css, Tailwind)
-├── .editorconfig
-├── .env
-└── index.html
+### 🎨 UI / UX Features
 
+* Modern glassmorphism interface
+* Smooth animations & transitions
+* Responsive dashboard layout
+* Premium dark mode design
+* Interactive order cards
+* Modern typography system
+* Optimized spacing & visual hierarchy
+* Mobile optimized components
 
 ---
 
-## 🚀 Getting Started
+### ⚡ Performance Features
 
-### Prerequisites
+* Lazy-loaded routes
+* Modular Vue architecture
+* Optimized API handling
+* Reusable components
+* State management support
+* Scalable folder structure
 
-- Node.js (v18 or later)
-- npm or yarn
+---
 
-### Installation
+# 🧰 Tech Stack
 
+| Technology      | Usage                 |
+| --------------- | --------------------- |
+| Vue.js          | Frontend framework    |
+| Vue Router      | Routing               |
+| Pinia           | State management      |
+| Axios           | API communication     |
+| CSS3            | Styling               |
+| JavaScript ES6+ | Application logic     |
+| REST API        | Backend communication |
 
+---
 
+# 📂 Project Structure
+
+```bash
+src/
+│
+├── assets/             # Static assets
+├── components/         # Reusable components
+├── pages/              # Application pages
+├── router/             # Vue router config
+├── stores/             # Pinia stores
+├── utils/              # Utility helpers
+├── services/           # API services
+├── layouts/            # Layout wrappers
+└── App.vue             # Root component
+```
+
+---
+
+# 🚀 Getting Started
+
+## 1️⃣ Clone the Repository
+
+```bash
+git clone https://github.com/mahmudpial/ECOMMERCE_APPLICATION_PROJECT_FRONTEND.git
+```
+
+---
+
+## 2️⃣ Navigate Into the Project
+
+```bash
+cd ECOMMERCE_APPLICATION_PROJECT_FRONTEND
+```
+
+---
+
+## 3️⃣ Install Dependencies
+
+```bash
+npm install
+```
+
+---
+
+## 4️⃣ Run Development Server
+
+```bash
+npm run dev
+```
+
+Application will run at:
+
+```bash
+http://localhost:5173
+```
+
+---
+
+# 🔑 Environment Variables
+
+Create a `.env` file in the project root:
+
+```env
+VITE_API_URL=http://localhost:8000/api
+```
+
+---
+
+# 📱 Responsive Design
+
+This application is fully optimized for:
+
+* Desktop
+* Tablet
+* Mobile devices
+* Large screens
+* Dark mode accessibility
+
+---
+
+# 🎨 Design System
+
+## Light Mode
+
+```css
+Background: #F3F6FB
+Card: rgba(255,255,255,0.78)
+Primary: #2563EB
+Text: #0F172A
+```
+
+## Dark Mode
+
+```css
+Background: #0B1120
+Card: rgba(17,24,39,0.82)
+Primary: #3B82F6
+Text: #F8FAFC
+```
+
+---
+
+# 🔥 Core Modules
+
+## 👤 Customer Modules
+
+* Authentication System
+* Product Management
+* Cart System
+* Checkout Workflow
+* Order Management
+* User Dashboard
+* Payment Flow
+* Admin-ready Architecture
+
+## 🛠 Admin Modules
+
+* Admin Authentication
+* Product CRUD Operations
+* Category CRUD Operations
+* Order Management Dashboard
+* Inventory Management
+* Customer Overview
+* Analytics Dashboard
+* Sales Reporting
+* Discount Management
+* Admin Settings
+
+---
+
+# 📸 Screenshots
+
+## 🏠 Home Page
+
+*Add screenshot here*
+
+---
+
+## 📦 Product Page
+
+*Add screenshot here*
+
+---
+
+## 🛒 Cart Page
+
+*Add screenshot here*
+
+---
+
+## 📑 Order Dashboard
+
+*Add screenshot here*
+
+---
+
+# 🔌 API Integration
+
+The frontend communicates with backend APIs using Axios.
+
+Example:
+
+```js
+const response = await api.get('/products')
+```
+
+---
+
+# 🏗 Build for Production
+
+```bash
+npm run build
+```
+
+---
+
+# 🚀 Future Improvements
+
+Planned enhancements:
+
+* SSL payment integration
+* Wishlist system
+* Product reviews
+* Push notifications
+* Real-time order tracking
+* PWA support
+
+---
+
+# 🌐 Deployment
+
+You can deploy this application easily on:
+
+* Vercel
+* Netlify
+* Firebase Hosting
+* Render
+
+---
+
+# 🤝 Contributing
+
+Contributions are welcome.
+
+## Steps:
+
+1. Fork the repository
+2. Create a feature branch
+3. Commit your changes
+4. Push your branch
+5. Open a Pull Request
+
+---
+
+# 📄 License
+
+This project is licensed under the MIT License.
+
+---
+
+# 👨‍💻 Author
+
+## Mahmudpial
+
+* GitHub: [https://github.com/mahmudpial](https://github.com/mahmudpial)
+
+---
+
+# ⭐ Support
+
+If you like this project:
+
+* Star the repository
+* Share it with others
+* Contribute improvements
+
+---
+
+# 💡 Project Goals
+
+This project was built to provide:
+
+* A professional eCommerce frontend architecture
+* Clean and scalable Vue.js codebase
+* Modern responsive UI/UX
+* Real-world shopping experience
+* Backend-ready frontend system
+
+---
+
+# 📬 Contact
+
+For collaboration, feedback, or project discussions:
+
+* GitHub: [https://github.com/mahmudpial](https://github.com/mahmudpial)
+
+---
+
+## 🌟 Thank You for Visiting the Repository
