@@ -210,32 +210,6 @@ Text: #F8FAFC
 
 ---
 
-# 📸 Screenshots
-
-## 🏠 Home Page
-
-*Add screenshot here*
-
----
-
-## 📦 Product Page
-
-*Add screenshot here*
-
----
-
-## 🛒 Cart Page
-
-*Add screenshot here*
-
----
-
-## 📑 Order Dashboard
-
-*Add screenshot here*
-
----
-
 # 🔌 API Integration
 
 The frontend communicates with backend APIs using Axios.
