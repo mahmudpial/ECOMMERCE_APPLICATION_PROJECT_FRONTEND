@@ -2,12 +2,13 @@
 
 [![Vue 3](https://img.shields.io/badge/Vue-3-42b883?logo=vue.js)](https://vuejs.org/)
 [![Pinia](https://img.shields.io/badge/Pinia-State_Management-ffb237)](https://pinia.vuejs.org/)
-[![Tailwind CSS](https://img.shields.io/badge/Tailwind-CSS-06b6d4?logo=tailwindcss)](https://tailwindcss.com/)
 [![Vite](https://img.shields.io/badge/Vite-Bundler-646cff?logo=vite)](https://vitejs.dev/)
 
-A clean, minimal e‑commerce frontend built with **Vue 3** and **Pinia**, featuring a **Japanese minimalism** visual language with an **electric blue** accent. Fully responsive, dark/light mode ready, and production‑optimised.
+A clean, minimalist e‑commerce frontend built with **Vue 3** and **Pinia**.  
+**Japanese minimalism** visual language with an **electric blue** accent.  
+Fully responsive, dark/light mode ready, production‑optimised.
 
-🔗 **Live preview** – *(add your live URL here)*
+🔗 **Live preview** – *(add your deployed URL here)*
 
 ---
 
@@ -28,33 +29,69 @@ A clean, minimal e‑commerce frontend built with **Vue 3** and **Pinia**, featu
 
 ## 🎨 Design System
 
-- **Colours**:  
-  - Light mode: `#F5F7FA` background, white cards, near‑black text  
-  - Dark mode: `#0F1218` background, `#1A1E26` cards, light text  
-  - Accent: electric blue (`#0066FF` light / `#3B82F6` dark)
+| Element        | Light Mode                     | Dark Mode                      |
+| -------------- | ------------------------------ | ------------------------------ |
+| Page background| `#F5F7FA`                      | `#0F1218`                      |
+| Card background| `#FFFFFF`                      | `#1A1E26`                      |
+| Primary text   | `#1A2A3A`                      | `#E8EDF2`                      |
+| Accent colour  | `#0066FF`                      | `#3B82F6`                      |
 
-- **Typography**:  
-  - Headings & brand: **Sora**  
-  - Body & UI: **Plus Jakarta Sans**
-
-- **Spacing & borders**: consistent 8‑40px border‑radius, light shadows, 1.5rem core spacing
-
+- **Typography**: Headings & brand → **Sora**, Body & UI → **Plus Jakarta Sans**
+- **Spacing & borders**: 8‑40px border‑radius, 1.5rem core spacing, light shadows
 - **Animations**: subtle hover lifts, smooth drawer slide, fade‑in on scroll
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Area            | Technology                                                                     |
-| --------------- | ------------------------------------------------------------------------------ |
-| Framework       | [Vue 3](https://vuejs.org/) (Composition API)                                 |
-| Routing         | [Vue Router 4](https://router.vuejs.org/)                                     |
-| State Management| [Pinia](https://pinia.vuejs.org/) (stores for cart, auth, theme)               |
-| Styling         | Scoped CSS + CSS variables + [Tailwind CSS](https://tailwindcss.com/) (utilities) |
-| HTTP Client     | [Axios](https://axios-http.com/)                                              |
-| Build Tool      | [Vite](https://vitejs.dev/)                                                   |
-| Fonts           | Google Fonts (Sora, Plus Jakarta Sans)                                        |
+| Area               | Technology                                      |
+| ------------------ | ----------------------------------------------- |
+| Framework          | Vue 3 (Composition API)                         |
+| Routing            | Vue Router 4                                    |
+| State Management   | Pinia (auth, cart, customerAuth)                |
+| Styling            | Scoped CSS + CSS variables + Tailwind (utils)   |
+| HTTP Client        | Axios                                           |
+| Build Tool         | Vite                                            |
+| Fonts              | Google Fonts (Sora, Plus Jakarta Sans)          |
 
 ---
 
 ## 📁 Project Structure
+commercia-frontend/
+├── public/ # static assets
+├── src/
+│ ├── assets/ # images, fonts, etc.
+│ ├── components/
+│ │ ├── admin/ # admin components (Dashboard, Login, etc.)
+│ │ ├── customer/ # ProductCard.vue
+│ │ └── global/ # ErrorMessage, LoadingSpinner
+│ ├── layout/ # AdminMaster.Vue, CustomerLayout.vue
+│ ├── router/ # index.js (route definitions)
+│ ├── stores/ # auth.js, cart.js, customerAuth.js
+│ ├── utils/ # axios.js, customerCommerce.js (helpers)
+│ ├── views/
+│ │ ├── admin/ # Dashboard.vue, Login.vue
+│ │ └── customer/ # Cart, Checkout, Home, Login, OrderHistory,
+│ │ # OrderSuccess, ProductDetail, Products, Profile, Register
+│ ├── App.vue
+│ ├── main.js
+│ ├── base.css # CSS variables & resets
+│ └── main.css # entry point (imports base.css, Tailwind)
+├── .editorconfig
+├── .env
+└── index.html
+
+
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+
+- Node.js (v18 or later)
+- npm or yarn
+
+### Installation
+
+
+
