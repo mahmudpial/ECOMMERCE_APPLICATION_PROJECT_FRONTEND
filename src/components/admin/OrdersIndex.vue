@@ -551,8 +551,43 @@ const visiblePages = computed(() => {
 })
 
 // Download invoice PDF in a new tab
-const downloadInvoice = (orderId) => {
-    window.open(`/api/v1/admin/orders/${orderId}/invoice`, '_blank');
+const downloadInvoice = async (orderId) => {
+    try {
+        const token = localStorage.getItem('admin_token')
+        if (!token) {
+            showToast('You are not authenticated. Please log in again.', 'error')
+            return
+        }
+
+        const apiUrl = `${import.meta.env.VITE_APP_API_URL}/admin/orders/${orderId}/invoice`
+        const response = await fetch(apiUrl, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Accept': 'application/pdf'
+            }
+        })
+
+        if (!response.ok) {
+            if (response.status === 401) {
+                showToast('Session expired. Please log in again.', 'error')
+                return
+            }
+            throw new Error(`HTTP ${response.status}`)
+        }
+
+        const blob = await response.blob()
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `invoice-${orderId}.pdf`
+        document.body.appendChild(a)
+        a.click()
+        a.remove()
+        URL.revokeObjectURL(url)
+    } catch (error) {
+        console.error('Invoice download failed:', error)
+        showToast('Failed to download invoice. Please try again.', 'error')
+    }
 }
 
 onMounted(() => {
