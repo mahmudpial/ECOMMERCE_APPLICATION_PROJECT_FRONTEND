@@ -66,6 +66,10 @@
                             v-if="!collapsed">Categories</span></router-link>
                     <router-link to="/admin/orders"><i class="fas fa-shopping-cart"></i><span
                             v-if="!collapsed">Orders</span></router-link>
+                    <router-link to="/admin/reports">
+                        <i class="fas fa-chart-pie"></i>
+                        <span v-if="!collapsed">Reports</span>
+                    </router-link>
                     <router-link to="/admin/users"><i class="fas fa-users"></i><span
                             v-if="!collapsed">Users</span></router-link>
                 </nav>

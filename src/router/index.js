@@ -7,6 +7,7 @@ import CategoriesIndex from '@/components/admin/CategoriesIndex.vue'
 import BrandsIndex from '@/components/admin/BrandsIndex.vue'
 import OrdersIndex from '@/components/admin/OrdersIndex.vue'
 import UsersIndex from '@/components/admin/UsersIndex.vue'
+import ReportsIndex from '@/components/admin/ReportsIndex.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useCustomerAuthStore } from '@/stores/customerAuth'
 
@@ -29,6 +30,7 @@ const routes = [
       { path: 'brands', name: 'admin.brands', component: BrandsIndex },
       { path: 'orders', name: 'admin.orders', component: OrdersIndex },
       { path: 'users', name: 'admin.users', component: UsersIndex },
+      { path: 'reports', name: 'admin.reports', component: ReportsIndex },
     ],
   },
 

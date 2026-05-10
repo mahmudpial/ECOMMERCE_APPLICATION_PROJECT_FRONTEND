@@ -22,8 +22,8 @@
                 <div class="filter-grid">
                     <div class="filter-item">
                         <label class="form-label">Search Order</label>
-                        <input type="text" class="form-control" placeholder="Search by order no, phone, or transaction..."
-                            v-model="searchKeyword">
+                        <input type="text" class="form-control"
+                            placeholder="Search by order no, phone, or transaction..." v-model="searchKeyword">
                     </div>
                     <div class="filter-item">
                         <label class="form-label">Status</label>
@@ -102,6 +102,9 @@
                                         <i class="fas fa-eye"></i>
                                         <span class="d-none d-md-inline ms-1">Manage</span>
                                     </button>
+                                    <button class="btn btn-sm btn-success" @click="downloadInvoice(order.id)">
+                                        <i class="fas fa-file-pdf"></i> Invoice
+                                    </button>
                                 </td>
                             </tr>
                         </tbody>
@@ -179,7 +182,8 @@
                             </div>
                             <div class="summary-card">
                                 <span class="summary-label">Payment Method</span>
-                                <strong>{{ selectedOrder.payment_label || selectedOrder.payment_method || '-' }}</strong>
+                                <strong>{{ selectedOrder.payment_label || selectedOrder.payment_method || '-'
+                                    }}</strong>
                                 <small class="text-muted">Method used at checkout</small>
                             </div>
                             <div class="summary-card">
@@ -190,7 +194,8 @@
                             <div class="summary-card">
                                 <span class="summary-label">Created</span>
                                 <strong>{{ formatDate(selectedOrder.created_at) }}</strong>
-                                <small class="text-muted">Last updated {{ formatDate(selectedOrder.updated_at) }}</small>
+                                <small class="text-muted">Last updated {{ formatDate(selectedOrder.updated_at)
+                                    }}</small>
                             </div>
                         </div>
 
@@ -242,7 +247,8 @@
                                     </div>
                                     <div class="col-12 col-md-3">
                                         <div class="text-muted small">Total</div>
-                                        <div class="fw-semibold text-primary fs-5">৳{{ formatMoney(selectedOrder.total) }}</div>
+                                        <div class="fw-semibold text-primary fs-5">৳{{ formatMoney(selectedOrder.total)
+                                            }}</div>
                                     </div>
                                     <div class="col-12">
                                         <div class="text-muted small mb-1">Shipping Address</div>
@@ -265,9 +271,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        <tr v-for="item in selectedOrder.items" :key="item.id || `${item.product_id}-${item.product_name}`">
+                                        <tr v-for="item in selectedOrder.items"
+                                            :key="item.id || `${item.product_id}-${item.product_name}`">
                                             <td>
-                                                <div class="fw-semibold">{{ item.product_name || item.name || '-' }}</div>
+                                                <div class="fw-semibold">{{ item.product_name || item.name || '-' }}
+                                                </div>
                                             </td>
                                             <td class="text-end">৳{{ formatMoney(item.price) }}</td>
                                             <td class="text-center">{{ item.quantity }}</td>
@@ -323,6 +331,7 @@ const statusOptions = [
 ]
 
 const currentOrderStatus = computed(() => selectedOrder.value?.status || selectedOrder.value?.order_status || 'pending')
+
 
 // Status badge classes (light mode defaults, dark mode overrides provided in CSS)
 const getStatusBadge = (status) => {
@@ -540,6 +549,11 @@ const visiblePages = computed(() => {
         (item) => item !== '...' || rangeWithDots.indexOf(item) === rangeWithDots.lastIndexOf(item)
     )
 })
+
+// Download invoice PDF in a new tab
+const downloadInvoice = (orderId) => {
+    window.open(`/api/v1/admin/orders/${orderId}/invoice`, '_blank');
+}
 
 onMounted(() => {
     loadOrders()
