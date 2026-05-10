@@ -1,43 +1,33 @@
-/* postcss */
-/* 1. Import base.css first (required by PostCSS) */
+/* ============================================================
+   MAIN CSS — entry point (PostCSS)
+   ============================================================ */
+
+/* 1. Base design tokens & resets */
 @import './base.css';
 
-/* ENTRY POINT: Tailwind + Custom Base Styles */
+/* 2. Tailwind (if you use it for utilities) — keep only if needed */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-
-/* 3. Global app container */
+/* 3. Global app container — minimal reset */
 #app {
   width: 100%;
   margin: 0;
   padding: 0;
-  font-weight: normal;
   min-height: 100vh;
+  font-weight: normal;
 }
 
-/* 4. Link styles */
-a {
-  text-decoration: none;
-  color: inherit;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-a:hover {
-  color: inherit;
-}
-
-/* 5. Body background (light mode) */
+/* 4. Base body — inherits variables from base.css */
 body {
-  background:
-    radial-gradient(circle at top left, rgba(59, 130, 246, 0.10), transparent 26%),
-    radial-gradient(circle at top right, rgba(16, 185, 129, 0.10), transparent 24%),
-    linear-gradient(180deg, #f8fafc 0%, #eef2ff 100%);
-  color: #0f172a;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  line-height: 1.5;
 }
 
-/* 6. Form elements inherit font */
+/* 5. Form elements inherit font */
 button,
 input,
 select,
@@ -45,9 +35,7 @@ textarea {
   font: inherit;
 }
 
-/* =====================================================
-   RESPONSIVE GLOBAL OVERRIDES
-   ===================================================== */
+/* 6. Responsive font size adjustments (optional) */
 @media (max-width: 640px) {
   body {
     font-size: 14px;
@@ -62,8 +50,8 @@ textarea {
   }
 
   .container {
-    padding-left: 16px;
-    padding-right: 16px;
+    padding-left: 1rem;
+    padding-right: 1rem;
   }
 }
 
@@ -73,190 +61,23 @@ textarea {
   }
 
   .container {
-    padding-left: 24px;
-    padding-right: 24px;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
   }
 }
 
-/* =====================================================
-   HELPER UTILITIES
-   ===================================================== */
+/* 7. Accessibility focus ring */
 *:focus-visible {
-  outline: 2px solid #3b82f6;
+  outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
 
+/* 8. Smooth scroll */
 html {
   scroll-behavior: smooth;
 }
 
-/* Global badge styles (light & dark) */
-.badge {
-  padding: 4px 8px;
-  border-radius: 6px;
-  font-size: 12px;
-  display: inline-block;
-}
-
-.badge {
-  background: #e2e8f0;
-  color: #1e293b;
-}
-
-.badge.success {
-  background: #dcfce7;
-  color: #166534;
-}
-
-.badge.warning {
-  background: #fef3c7;
-  color: #92400e;
-}
-
-.badge.danger {
-  background: #fee2e2;
-  color: #991b1b;
-}
-
-.badge.primary {
-  background: #dbeafe;
-  color: #1e40af;
-}
-
-.badge.info {
-  background: #e0f2fe;
-  color: #075985;
-}
-
-.dark .badge {
-  background: #334155;
-  color: #e2e8f0;
-}
-
-.dark .badge.success {
-  background: #14532d;
-  color: #bbf7d0;
-}
-
-.dark .badge.warning {
-  background: #78350f;
-  color: #fef08a;
-}
-
-.dark .badge.danger {
-  background: #7f1d1d;
-  color: #fecaca;
-}
-
-.dark .badge.primary {
-  background: #1e3a8a;
-  color: #bfdbfe;
-}
-
-.dark .badge.info {
-  background: #0c4a6e;
-  color: #bae6fd;
-}
-
-/* =====================================================
-   DARK MODE – GLOBAL OVERRIDES
-   ===================================================== */
-.dark body {
-  background: #0f172a;
-  color: #e2e8f0;
-}
-
-.dark .card,
-.dark .panel,
-.dark .modal-content,
-.dark .table {
-  background-color: #1e293b !important;
-  border-color: #334155 !important;
-}
-
-.dark .table-light {
-  background-color: #334155 !important;
-  color: #f1f5f9;
-}
-
-.dark .text-muted {
-  color: #94a3b8 !important;
-}
-
-/* ===== DARK MODE – MODAL & FORM CONTROLS ===== */
-.dark .modal-header,
-.dark .modal-footer {
-  border-color: #334155 !important;
-  background-color: #1e293b !important;
-}
-
-.dark .modal-title,
-.dark .modal-body label,
-.dark .modal-body .form-label,
-.dark .modal-body .form-check-label {
-  color: #e2e8f0 !important;
-}
-
-.dark .modal-body .form-control,
-.dark .modal-body .form-select,
-.dark .modal-body .input-group-text {
-  background-color: #0f172a !important;
-  border-color: #475569 !important;
-  color: #f1f5f9 !important;
-}
-
-.dark .modal-body .form-control:focus,
-.dark .modal-body .form-select:focus {
-  border-color: #3b82f6 !important;
-  box-shadow: 0 0 0 0.2rem rgba(59, 130, 246, 0.25);
-}
-
-.dark .modal-body .form-control::placeholder {
-  color: #94a3b8 !important;
-}
-
-.dark .modal-body .text-muted,
-.dark .modal-body small {
-  color: #94a3b8 !important;
-}
-
-.dark .btn-close {
-  filter: invert(1) grayscale(100%) brightness(200%);
-}
-
-.dark .alert-danger {
-  background-color: rgba(239, 68, 68, 0.2);
-  border-color: #ef4444;
-  color: #fecaca;
-}
-
-.dark .alert-success {
-  background-color: rgba(16, 185, 129, 0.2);
-  border-color: #10b981;
-  color: #a7f3d0;
-}
-
-/* =====================================================
-   MOBILE TOUCH IMPROVEMENTS
-   ===================================================== */
-@media (max-width: 768px) {
-
-  button,
-  .btn,
-  .icon-btn,
-  [role="button"] {
-    min-height: 44px;
-    min-width: 44px;
-  }
-
-  .table .btn-sm {
-    padding: 8px 12px;
-  }
-}
-
-/* =====================================================
-   UTILITY CLASSES
-   ===================================================== */
+/* 9. Utility: hide scrollbar */
 .hide-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;

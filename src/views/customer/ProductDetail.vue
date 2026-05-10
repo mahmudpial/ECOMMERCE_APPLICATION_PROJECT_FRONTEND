@@ -1,204 +1,192 @@
 <template>
     <div class="product-detail-page">
-        <div v-if="loading" class="loading-shell">
+
+        <!-- Loading Skeleton -->
+        <div v-if="loading" class="skeleton-shell">
             <div class="skeleton-grid">
-                <div class="skeleton-card image-skeleton"></div>
-                <div class="skeleton-stack">
-                    <div class="skeleton-card line short"></div>
-                    <div class="skeleton-card line medium"></div>
-                    <div class="skeleton-card line long"></div>
-                    <div class="skeleton-card line tall"></div>
+                <div class="skeleton-gallery">
+                    <div class="skeleton-main"></div>
+                    <div class="skeleton-thumbs">
+                        <div v-for="n in 4" :key="n" class="skeleton-thumb"></div>
+                    </div>
+                </div>
+                <div class="skeleton-info">
+                    <div class="skeleton-line short"></div>
+                    <div class="skeleton-line medium"></div>
+                    <div class="skeleton-line long"></div>
+                    <div class="skeleton-line xlong"></div>
                 </div>
             </div>
         </div>
 
-        <div v-else-if="errorMessage || !product" class="error-shell">
-            <div class="error-card">
-                <div class="error-icon">
-                    <i class="fas fa-box-open"></i>
-                </div>
-                <h1>Product not found</h1>
-                <p>{{ errorMessage || 'We could not load this product right now.' }}</p>
-                <div class="error-actions">
-                    <router-link to="/products" class="primary-btn">Back to shop</router-link>
-                    <button class="secondary-btn" type="button" @click="reloadProduct">Try again</button>
-                </div>
+        <!-- Error state -->
+        <div v-else-if="errorMessage || !product" class="empty-state">
+            <div class="empty-icon">—</div>
+            <h2>Piece not found</h2>
+            <p>{{ errorMessage || 'We could not load this piece.' }}</p>
+            <div class="empty-actions">
+                <router-link to="/products" class="btn-outline">Return to shop</router-link>
+                <button class="btn-ghost" @click="loadProduct">Try again</button>
             </div>
         </div>
 
-        <div v-else class="detail-shell">
+        <!-- Product content -->
+        <div v-else class="product-content">
+            <!-- Breadcrumb -->
             <nav class="breadcrumb">
                 <router-link to="/">Home</router-link>
-                <span>/</span>
+                <span class="separator">/</span>
                 <router-link to="/products">Shop</router-link>
-                <span>/</span>
+                <span class="separator">/</span>
                 <span>{{ product.name }}</span>
             </nav>
 
-            <section class="product-hero">
-                <div class="gallery-card">
+            <!-- Hero section -->
+            <div class="product-hero">
+                <!-- Gallery column -->
+                <div class="gallery-col">
                     <div class="main-image">
                         <img :src="selectedImage" :alt="product.name" />
+                        <span v-if="discountPercent" class="discount-badge">−{{ discountPercent }}%</span>
                     </div>
-
-                    <div class="thumb-row" v-if="images.length > 1">
-                        <button
-                            v-for="img in images"
-                            :key="img"
-                            type="button"
-                            class="thumb"
-                            :class="{ active: selectedImage === img }"
-                            @click="selectedImage = img"
-                        >
+                    <div v-if="images.length > 1" class="thumbnails">
+                        <button v-for="img in images" :key="img" class="thumb"
+                            :class="{ active: selectedImage === img }" @click="selectedImage = img">
                             <img :src="img" :alt="product.name" />
                         </button>
                     </div>
                 </div>
 
-                <aside class="purchase-card">
-                    <div class="purchase-top">
-                        <span class="category-badge">{{ categoryLabel }}</span>
-                        <span v-if="stockCount > 0" class="stock-pill in-stock">
-                            <i class="fas fa-circle-check"></i>
-                            In stock
-                        </span>
-                        <span v-else class="stock-pill out-stock">
-                            <i class="fas fa-circle-xmark"></i>
-                            Out of stock
+                <!-- Info column -->
+                <div class="info-col">
+                    <div class="product-meta">
+                        <span class="category">{{ categoryLabel }}</span>
+                        <span class="stock" :class="stockCount > 0 ? 'in-stock' : 'out-of-stock'">
+                            {{ stockCount > 0 ? 'In stock' : 'Out of stock' }}
                         </span>
                     </div>
 
-                    <h1>{{ product.name }}</h1>
+                    <h1 class="product-title">{{ product.name }}</h1>
 
-                    <div class="rating-row">
-                        <div class="stars" :aria-label="`${rating} out of 5 stars`">
-                            <i v-for="n in 5" :key="n" class="fas" :class="n <= Math.round(rating) ? 'fa-star' : 'fa-star-half-stroke'"></i>
+                    <div class="rating">
+                        <div class="stars">
+                            <span v-for="n in 5" :key="n" class="star" :class="getStarClass(n)">★</span>
                         </div>
-                        <span>{{ rating.toFixed(1) }}</span>
-                        <span>({{ reviewCount }} reviews)</span>
+                        <span class="rating-value">{{ rating.toFixed(1) }}</span>
+                        <span class="rating-count">({{ reviewCount }} reviews)</span>
                     </div>
 
-                    <div class="price-row">
-                        <div class="price-stack">
-                            <strong>৳{{ formatMoney(displayPrice) }}</strong>
-                            <span v-if="originalPrice">৳{{ formatMoney(originalPrice) }}</span>
+                    <div class="price-block">
+                        <div class="price-row">
+                            <span class="current">৳{{ formatMoney(displayPrice) }}</span>
+                            <span v-if="originalPrice" class="original">৳{{ formatMoney(originalPrice) }}</span>
                         </div>
-                        <span v-if="discountPercent" class="discount-pill">-{{ discountPercent }}%</span>
+                        <span v-if="discountPercent" class="save-badge">Save {{ discountPercent }}%</span>
                     </div>
 
-                    <p class="short-description">
-                        {{ product.short_description || product.description || 'A polished, high-quality product ready for checkout.' }}
+                    <p class="description">
+                        {{ product.short_description || product.description?.slice(0, 180) || 'A considered piece of
+                        enduring quality.' }}
                     </p>
 
-                    <div class="trust-grid">
-                        <div class="trust-item">
-                            <i class="fas fa-shield-heart"></i>
-                            <span>Secure payment</span>
-                        </div>
-                        <div class="trust-item">
-                            <i class="fas fa-truck-fast"></i>
-                            <span>Fast delivery</span>
-                        </div>
-                        <div class="trust-item">
-                            <i class="fas fa-rotate-left"></i>
-                            <span>Easy returns</span>
+                    <!-- Trust signals -->
+                    <div class="trust-signals">
+                        <div class="trust-item" v-for="t in trustItems" :key="t.label">
+                            <span class="trust-icon">{{ t.icon }}</span>
+                            <span>{{ t.label }}</span>
                         </div>
                     </div>
 
-                    <div class="quantity-row">
-                        <div class="qty-control">
-                            <button type="button" @click="decrementQuantity" :disabled="quantity <= 1">-</button>
+                    <!-- Quantity and Add to Cart -->
+                    <div class="cart-controls">
+                        <div class="quantity">
+                            <button @click="decrementQuantity" :disabled="quantity <= 1">−</button>
                             <span>{{ quantity }}</span>
-                            <button type="button" @click="incrementQuantity">+</button>
+                            <button @click="incrementQuantity" :disabled="quantity >= stockCount">+</button>
                         </div>
-
-                        <button class="primary-btn" type="button" @click="addToCart" :disabled="stockCount === 0">
-                            <i class="fas fa-cart-shopping"></i>
+                        <button class="btn-primary add-btn" @click="addToCart" :disabled="stockCount === 0">
                             Add to cart
                         </button>
                     </div>
 
-                    <button class="buy-now-btn" type="button" @click="buyNow" :disabled="stockCount === 0">
-                        Buy now
+                    <button class="btn-outline buy-now" @click="buyNow" :disabled="stockCount === 0">
+                        Buy now — ৳{{ formatMoney(displayPrice * quantity) }}
                     </button>
 
-                    <div v-if="successMessage" class="toast-success">
-                        <i class="fas fa-circle-check"></i>
-                        {{ successMessage }}
+                    <div v-if="successMessage" class="success-toast">
+                        <span>✓</span> {{ successMessage }}
                     </div>
 
+                    <!-- Meta info grid -->
                     <div class="meta-grid">
-                        <div class="meta-card">
-                            <span>Brand</span>
-                            <strong>{{ brandLabel }}</strong>
-                        </div>
-                        <div class="meta-card">
-                            <span>SKU</span>
-                            <strong>{{ skuLabel }}</strong>
-                        </div>
-                        <div class="meta-card">
-                            <span>Delivery</span>
-                            <strong>{{ deliveryLabel }}</strong>
-                        </div>
-                        <div class="meta-card">
-                            <span>Availability</span>
-                            <strong>{{ stockLabel }}</strong>
+                        <div class="meta-item" v-for="m in metaItems" :key="m.label">
+                            <span class="meta-label">{{ m.label }}</span>
+                            <strong class="meta-value">{{ m.value }}</strong>
                         </div>
                     </div>
-                </aside>
-            </section>
+                </div>
+            </div>
 
-            <section class="details-grid">
-                <article class="detail-card wide">
-                    <div class="section-head">
+            <!-- Details section (description + specs) -->
+            <div class="details-section">
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <span class="detail-kicker">Product story</span>
                         <h2>Description</h2>
-                        <span>{{ product.category?.name || product.category_name || 'Featured' }}</span>
                     </div>
-                    <p class="description-text">
-                        {{ product.description || 'This product comes with clear details, a clean presentation, and a shopping flow that keeps customers focused on the purchase.' }}
+                    <p class="detail-text">
+                        {{ product.description || 'This piece represents the finest in considered design — built for
+                        longevity, worn for meaning.' }}
                     </p>
-
-                    <div v-if="highlightPoints.length" class="feature-list">
-                        <div v-for="point in highlightPoints" :key="point" class="feature-item">
-                            <i class="fas fa-check"></i>
-                            <span>{{ point }}</span>
+                    <div v-if="highlights.length" class="highlights">
+                        <div v-for="h in highlights" :key="h" class="highlight">
+                            <span class="highlight-icon">✦</span>
+                            <span>{{ h }}</span>
                         </div>
                     </div>
-                </article>
+                </div>
 
-                <article class="detail-card">
-                    <div class="section-head">
+                <div class="detail-card">
+                    <div class="detail-header">
+                        <span class="detail-kicker">Details & specs</span>
                         <h2>Specifications</h2>
-                        <span>Quick view</span>
                     </div>
-                    <div class="spec-list">
-                        <div v-for="spec in specifications" :key="spec.label" class="spec-row">
-                            <span>{{ spec.label }}</span>
-                            <strong>{{ spec.value }}</strong>
+                    <div class="specs">
+                        <div v-for="s in specifications" :key="s.label" class="spec-row">
+                            <span class="spec-label">{{ s.label }}</span>
+                            <strong class="spec-value">{{ s.value }}</strong>
                         </div>
                     </div>
-                </article>
-            </section>
+                </div>
+            </div>
 
+            <!-- Related products -->
             <section class="related-section">
-                <div class="section-head">
-                    <h2>Related products</h2>
-                    <span>{{ relatedProducts.length }} item{{ relatedProducts.length === 1 ? '' : 's' }}</span>
+                <div class="related-header">
+                    <span class="related-kicker">You may also like</span>
+                    <h2>Related pieces</h2>
                 </div>
 
                 <div v-if="relatedLoading" class="related-loading">
-                    <i class="fas fa-spinner fa-spin"></i>
-                    <p>Loading related products...</p>
+                    <span class="loading-spinner">⋯</span> Loading…
                 </div>
 
                 <div v-else-if="relatedProducts.length" class="related-grid">
-                    <ProductCard v-for="item in relatedProducts" :key="item.id" :product="item" />
+                    <article v-for="item in relatedProducts" :key="item.id" class="related-card">
+                        <router-link :to="`/product/${item.id}`" class="related-link">
+                            <div class="related-image">
+                                <img :src="getProductImage(item)" :alt="item.name" loading="lazy" />
+                            </div>
+                            <div class="related-info">
+                                <div class="related-category">{{ item.category?.name || 'Collection' }}</div>
+                                <div class="related-name">{{ item.name }}</div>
+                                <div class="related-price">৳{{ formatMoney(getEffectivePrice(item)) }}</div>
+                            </div>
+                        </router-link>
+                    </article>
                 </div>
 
-                <div v-else class="related-empty">
-                    <i class="fas fa-boxes-stacked"></i>
-                    <p>No related products found for this item.</p>
-                </div>
+                <div v-else class="related-empty">No related pieces at this time.</div>
             </section>
         </div>
     </div>
@@ -208,19 +196,13 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/utils/axios'
-import ProductCard from '@/components/customer/ProductCard.vue'
-import {
-    formatMoney,
-    getEffectiveProductPrice,
-    getProductImage,
-    getProductImages,
-} from '@/utils/customerCommerce'
 import { useCartStore } from '@/stores/cart'
 
 const route = useRoute()
 const router = useRouter()
 const cartStore = useCartStore()
 
+// Data
 const product = ref(null)
 const relatedProducts = ref([])
 const loading = ref(true)
@@ -230,145 +212,139 @@ const successMessage = ref('')
 const selectedImage = ref('')
 const quantity = ref(1)
 
-const images = computed(() => getProductImages(product.value).length ? getProductImages(product.value) : [getProductImage(product.value)])
+// Trust items
+const trustItems = [
+    { icon: '✓', label: 'Authenticity guaranteed' },
+    { icon: '📦', label: 'Free delivery' },
+    { icon: '⟳', label: '30-day returns' },
+]
 
-const categoryLabel = computed(() => product.value?.category?.name || product.value?.category_name || 'Featured product')
-const brandLabel = computed(() => product.value?.brand?.name || product.value?.brand_name || 'Unknown')
-const skuLabel = computed(() => product.value?.sku || product.value?.code || 'N/A')
-const stockCount = computed(() => Number(product.value?.stock ?? product.value?.quantity ?? product.value?.available_stock ?? 0))
-const displayPrice = computed(() => getEffectiveProductPrice(product.value))
+// Helper functions
+const getProductImage = (p) => {
+    let imgs = p?.images
+    if (typeof imgs === 'string' && imgs.trim().startsWith('[')) {
+        try { imgs = JSON.parse(imgs) } catch { }
+    }
+    if (Array.isArray(imgs) && imgs.length) return imgs[0]
+    if (typeof imgs === 'string' && imgs.trim()) return imgs
+    return 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=600&q=80'
+}
+
+const getProductImages = (p) => {
+    if (!p) return []
+    let imgs = p.images
+    if (typeof imgs === 'string' && imgs.trim().startsWith('[')) {
+        try { imgs = JSON.parse(imgs) } catch { }
+    }
+    if (Array.isArray(imgs)) return imgs
+    if (typeof imgs === 'string' && imgs.trim()) return [imgs]
+    return []
+}
+
+const formatMoney = (v) => Number(v).toFixed(2)
+const getEffectivePrice = (p) => {
+    const disc = Number(p?.discount_price || 0)
+    const reg = Number(p?.price || 0)
+    return disc > 0 && disc < reg ? disc : reg
+}
+
+// Computed
+const images = computed(() => {
+    const imgs = getProductImages(product.value)
+    return imgs.length ? imgs : [getProductImage(product.value)]
+})
+
+const categoryLabel = computed(() => product.value?.category?.name || product.value?.category_name || 'Collection')
+const stockCount = computed(() => Number(product.value?.stock ?? product.value?.quantity ?? 0))
+const displayPrice = computed(() => getEffectivePrice(product.value))
 const originalPrice = computed(() => {
-    const regular = Number(product.value?.price || 0)
-    const discounted = Number(product.value?.discount_price || 0)
-
-    if (discounted > 0 && discounted < regular) return regular
-    return 0
+    const reg = Number(product.value?.price || 0)
+    const disc = Number(product.value?.discount_price || 0)
+    return disc > 0 && disc < reg ? reg : 0
 })
-const stockLabel = computed(() => {
-    if (stockCount.value > 10) return 'Plenty available'
-    if (stockCount.value > 0) return 'Limited stock'
-    return 'Out of stock'
-})
-const deliveryLabel = computed(() => product.value?.delivery_time || '3-5 business days')
-const reviewCount = computed(() => Number(product.value?.review_count || product.value?.reviews_count || 24))
-const rating = computed(() => Number(product.value?.rating || product.value?.average_rating || 4.8))
 const discountPercent = computed(() => {
-    if (!originalPrice.value || originalPrice.value <= displayPrice.value) return 0
+    if (!originalPrice.value) return 0
     return Math.round(((originalPrice.value - displayPrice.value) / originalPrice.value) * 100)
 })
+const reviewCount = computed(() => Number(product.value?.review_count || 24))
+const rating = computed(() => Number(product.value?.rating || 4.8))
 
-const highlightPoints = computed(() => {
-    const points = []
-
-    if (product.value?.short_description) points.push('Premium finish and carefully crafted product details.')
-    if (stockCount.value > 0) points.push(`In stock now with ${stockCount.value} unit${stockCount.value === 1 ? '' : 's'} ready to ship.`)
-    if (deliveryLabel.value) points.push(`Estimated delivery: ${deliveryLabel.value}.`)
-    if (discountPercent.value) points.push(`Save ${discountPercent.value}% compared to the original price.`)
-
-    return points.slice(0, 4)
+const highlights = computed(() => {
+    const pts = []
+    if (product.value?.short_description) pts.push('Premium materials, considered construction.')
+    if (stockCount.value > 0) pts.push(`${stockCount.value} unit${stockCount.value === 1 ? '' : 's'} available now.`)
+    if (discountPercent.value) pts.push(`Save ${discountPercent.value}% on this piece.`)
+    return pts
 })
 
 const specifications = computed(() => {
-    const spec = []
-    const source = product.value || {}
-
-    if (source.sku) spec.push({ label: 'SKU', value: source.sku })
-    if (source.brand?.name || source.brand_name) spec.push({ label: 'Brand', value: source.brand?.name || source.brand_name })
-    if (source.category?.name || source.category_name) spec.push({ label: 'Category', value: source.category?.name || source.category_name })
-    if (source.weight) spec.push({ label: 'Weight', value: `${source.weight}` })
-    if (source.color) spec.push({ label: 'Color', value: `${source.color}` })
-    if (source.size) spec.push({ label: 'Size', value: `${source.size}` })
-    if (source.material) spec.push({ label: 'Material', value: `${source.material}` })
-    if (source.warranty) spec.push({ label: 'Warranty', value: `${source.warranty}` })
-
-    if (!spec.length) {
-        spec.push(
-            { label: 'Delivery', value: deliveryLabel.value },
-            { label: 'Stock', value: stockLabel.value },
-            { label: 'Rating', value: `${rating.value.toFixed(1)} / 5` },
-        )
-    }
-
-    return spec.slice(0, 6)
+    const sp = []
+    const s = product.value || {}
+    if (s.sku) sp.push({ label: 'SKU', value: s.sku })
+    if (s.brand?.name || s.brand_name) sp.push({ label: 'Brand', value: s.brand?.name || s.brand_name })
+    if (s.category?.name || s.category_name) sp.push({ label: 'Category', value: s.category?.name || s.category_name })
+    if (s.weight) sp.push({ label: 'Weight', value: `${s.weight}` })
+    if (s.color) sp.push({ label: 'Colour', value: s.color })
+    if (s.material) sp.push({ label: 'Material', value: s.material })
+    if (!sp.length) sp.push({ label: 'Delivery', value: s.delivery_time || '3–5 days' }, { label: 'Rating', value: `${rating.value.toFixed(1)} / 5` })
+    return sp.slice(0, 6)
 })
 
-const selectedImageFallback = () => {
-    selectedImage.value = images.value[0] || getProductImage(product.value)
+const metaItems = computed(() => [
+    { label: 'Brand', value: product.value?.brand?.name || 'Atelier' },
+    { label: 'SKU', value: product.value?.sku || '—' },
+    { label: 'Delivery', value: product.value?.delivery_time || '3–5 days' },
+    { label: 'Availability', value: stockCount.value > 10 ? 'In stock' : stockCount.value > 0 ? 'Limited' : 'Sold out' },
+])
+
+const getStarClass = (n) => {
+    const r = rating.value
+    if (n <= Math.floor(r)) return 'full'
+    if (n === Math.ceil(r) && r % 1 > 0.3) return 'half'
+    return 'empty'
 }
 
-const loadRelatedProducts = async () => {
-    if (!product.value) return
-
-    relatedLoading.value = true
-    try {
-        const response = await api.get('products')
-        const list = response.data.data || response.data || []
-        const currentId = Number(route.params.id)
-        const categoryId = product.value.category_id || product.value.category?.id
-
-        relatedProducts.value = (Array.isArray(list) ? list : [])
-            .filter((item) => Number(item.id) !== currentId)
-            .filter((item) => {
-                if (!categoryId) return true
-                return Number(item.category_id || item.category?.id || 0) === Number(categoryId)
-            })
-            .slice(0, 4)
-    } catch (error) {
-        console.error('Failed to load related products:', error)
-        relatedProducts.value = []
-    } finally {
-        relatedLoading.value = false
-    }
-}
-
+// Methods
 const loadProduct = async () => {
     loading.value = true
     errorMessage.value = ''
-    successMessage.value = ''
-    quantity.value = 1
-
     try {
-        const response = await api.get(`products/${route.params.id}`)
-        product.value = response.data.product || response.data.data || response.data
-        selectedImageFallback()
-        const related = response.data.related_products?.data || response.data.related_products || []
+        const res = await api.get(`products/${route.params.id}`)
+        product.value = res.data.product || res.data.data || res.data
+        selectedImage.value = images.value[0]
+        const related = res.data.related_products?.data || res.data.related_products || []
         relatedProducts.value = Array.isArray(related) ? related : []
-
-        if (!relatedProducts.value.length) {
-            await loadRelatedProducts()
-        }
-    } catch (error) {
-        console.error('Product detail error:', error)
-        errorMessage.value = error.response?.data?.message || 'Unable to load this product.'
+        if (!relatedProducts.value.length) loadRelated()
+    } catch (e) {
+        errorMessage.value = e.response?.data?.message || 'Unable to load this piece.'
         product.value = null
-        relatedProducts.value = []
     } finally {
         loading.value = false
     }
 }
 
-const reloadProduct = () => {
-    loadProduct()
-}
-
-const incrementQuantity = () => {
-    if (stockCount.value > 0 && quantity.value < stockCount.value) {
-        quantity.value += 1
+const loadRelated = async () => {
+    relatedLoading.value = true
+    try {
+        const res = await api.get('products')
+        const list = res.data.data || res.data || []
+        const cid = product.value?.category_id || product.value?.category?.id
+        relatedProducts.value = list
+            .filter(i => Number(i.id) !== Number(route.params.id) && (!cid || Number(i.category_id || i.category?.id) === Number(cid)))
+            .slice(0, 4)
+    } catch { } finally {
+        relatedLoading.value = false
     }
 }
 
-const decrementQuantity = () => {
-    if (quantity.value > 1) quantity.value -= 1
-}
+const incrementQuantity = () => { if (quantity.value < stockCount.value) quantity.value++ }
+const decrementQuantity = () => { if (quantity.value > 1) quantity.value-- }
 
 const addToCart = () => {
     if (!product.value) return
-
     cartStore.addItem(product.value, quantity.value)
     successMessage.value = `${product.value.name} added to cart.`
-    window.setTimeout(() => {
-        successMessage.value = ''
-    }, 2500)
+    setTimeout(() => { successMessage.value = '' }, 2800)
 }
 
 const buyNow = () => {
@@ -376,16 +352,9 @@ const buyNow = () => {
     router.push('/checkout')
 }
 
-watch(
-    () => route.params.id,
-    () => {
-        loadProduct()
-    },
-)
-
-watch(images, () => {
-    selectedImageFallback()
-})
+// Watchers
+watch(() => route.params.id, loadProduct)
+watch(images, () => { selectedImage.value = images.value[0] })
 
 onMounted(() => {
     loadProduct()
@@ -393,200 +362,177 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+
+/* Light mode (default) */
 .product-detail-page {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 0 1rem 2rem;
+    --bg-page: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --text-primary: #1A2A3A;
+    --text-secondary: #5A6A7A;
+    --text-muted: #7A8A9A;
+    --border-light: #E8ECF0;
+    --border-input: #CCD4DC;
+    --accent: #0066FF;
+    --accent-soft: #F0F7FF;
+    --success: #10B981;
+    --danger: #EF4444;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.04);
+    --skeleton-bg: #EEEEEE;
 }
 
-.loading-shell,
-.error-shell {
-    display: grid;
-    place-items: center;
-    min-height: 60vh;
+/* Dark mode – triggered by parent .dark class */
+.product-detail-page.dark {
+    --bg-page: #0F1218;
+    --bg-card: #1A1E26;
+    --text-primary: #E8EDF2;
+    --text-secondary: #9AA8B8;
+    --text-muted: #6B7A8A;
+    --border-light: #2A2F3A;
+    --border-input: #3A4050;
+    --accent: #3B82F6;
+    --accent-soft: #1E2A3A;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --hover-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+    --skeleton-bg: #2A2F3A;
+}
+
+.product-detail-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    background: var(--bg-page);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-primary);
+}
+
+/* Skeleton */
+.skeleton-shell {
+    padding: 2rem;
 }
 
 .skeleton-grid {
-    width: 100%;
     display: grid;
-    grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+}
+
+.skeleton-gallery {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.skeleton-main {
+    aspect-ratio: 3/4;
+    background: var(--skeleton-bg);
+    border-radius: 20px;
+    animation: pulse 1.2s infinite;
+}
+
+.skeleton-thumbs {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.skeleton-thumb {
+    width: 64px;
+    height: 64px;
+    background: var(--skeleton-bg);
+    border-radius: 12px;
+    animation: pulse 1.2s infinite;
+}
+
+.skeleton-info {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
 }
 
-.skeleton-card {
-    border-radius: 1.5rem;
-    background: linear-gradient(90deg, rgba(148, 163, 184, 0.14), rgba(148, 163, 184, 0.08), rgba(148, 163, 184, 0.14));
-    background-size: 200% 100%;
-    animation: shimmer 1.2s linear infinite;
+.skeleton-line {
+    background: var(--skeleton-bg);
+    border-radius: 8px;
+    animation: pulse 1.2s infinite;
 }
 
-.image-skeleton {
-    min-height: 520px;
+.skeleton-line.short {
+    height: 28px;
+    width: 40%;
 }
 
-.skeleton-stack {
-    display: grid;
-    gap: 0.75rem;
+.skeleton-line.medium {
+    height: 56px;
+    width: 70%;
 }
 
-.line.short {
-    height: 58px;
+.skeleton-line.long {
+    height: 100px;
 }
 
-.line.medium {
-    height: 92px;
+.skeleton-line.xlong {
+    height: 200px;
 }
 
-.line.long {
-    height: 160px;
+@keyframes pulse {
+
+    0%,
+    100% {
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.9;
+    }
 }
 
-.line.tall {
-    height: 260px;
-}
-
-.error-card {
-    width: min(100%, 560px);
-    padding: 2rem;
-    text-align: center;
-    border-radius: 1.5rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
-}
-
-.error-icon {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto 1rem;
-    display: grid;
-    place-items: center;
-    border-radius: 1.2rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(20, 184, 166, 0.16));
-    color: var(--primary);
-    font-size: 1.7rem;
-}
-
-.error-card h1 {
-    margin-bottom: 0.5rem;
-}
-
-.error-card p {
-    color: var(--text-muted);
-    margin-bottom: 1.25rem;
-}
-
-.error-actions {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.75rem;
-}
-
-.primary-btn,
-.secondary-btn,
-.buy-now-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 999px;
-    padding: 0.9rem 1.25rem;
-    font-weight: 700;
-    text-decoration: none;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, background 0.2s, opacity 0.2s;
-}
-
-.primary-btn {
-    border: none;
-    background: linear-gradient(135deg, var(--primary), #0ea5e9);
-    color: white;
-    box-shadow: 0 16px 34px rgba(59, 130, 246, 0.22);
-}
-
-.primary-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    box-shadow: none;
-}
-
-.secondary-btn {
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
-}
-
-.buy-now-btn {
-    width: 100%;
-    border: 1px solid rgba(16, 185, 129, 0.35);
-    background: rgba(16, 185, 129, 0.1);
-    color: #047857;
-}
-
-.primary-btn:hover,
-.secondary-btn:hover,
-.buy-now-btn:hover:not(:disabled),
-.thumb:hover {
-    transform: translateY(-1px);
-}
-
-.buy-now-btn:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-}
-
+/* Breadcrumb */
 .breadcrumb {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 1rem;
+    padding: 1rem 2rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .breadcrumb a {
-    color: inherit;
+    color: var(--text-muted);
     text-decoration: none;
+    transition: color 0.2s;
 }
 
 .breadcrumb a:hover {
-    color: var(--primary);
+    color: var(--accent);
 }
 
+.separator {
+    color: var(--accent);
+}
+
+/* Hero section */
 .product-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(330px, 0.85fr);
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    padding: 2rem;
+}
+
+/* Gallery */
+.gallery-col {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.gallery-card,
-.purchase-card,
-.detail-card,
-.related-section {
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
-}
-
-.gallery-card,
-.purchase-card,
-.detail-card,
-.related-section {
-    border-radius: 1.5rem;
-}
-
-.gallery-card {
-    padding: 1rem;
 }
 
 .main-image {
-    aspect-ratio: 1 / 1;
-    border-radius: 1.25rem;
+    position: relative;
+    aspect-ratio: 3/4;
+    background: var(--bg-card);
+    border-radius: 20px;
     overflow: hidden;
-    background: rgba(59, 130, 246, 0.05);
+    border: 1px solid var(--border-light);
 }
 
 .main-image img {
@@ -595,27 +541,39 @@ onMounted(() => {
     object-fit: cover;
 }
 
-.thumb-row {
+.discount-badge {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+    background: var(--accent);
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 700;
+    padding: 0.25rem 0.6rem;
+    border-radius: 30px;
+}
+
+.thumbnails {
     display: flex;
+    gap: 0.5rem;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 0.9rem;
 }
 
 .thumb {
-    width: 74px;
-    height: 74px;
-    border-radius: 1rem;
+    width: 80px;
+    height: 80px;
     padding: 0;
-    border: 2px solid transparent;
-    background: transparent;
+    border: 1px solid var(--border-light);
+    border-radius: 12px;
+    background: var(--bg-card);
     cursor: pointer;
     overflow: hidden;
+    transition: border-color 0.2s;
 }
 
-.thumb.active {
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+.thumb.active,
+.thumb:hover {
+    border-color: var(--accent);
 }
 
 .thumb img {
@@ -624,375 +582,552 @@ onMounted(() => {
     object-fit: cover;
 }
 
-.purchase-card {
-    padding: 1.25rem;
-    position: sticky;
-    top: 6rem;
-}
-
-.purchase-top {
+/* Info column */
+.info-col {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.55rem;
-    align-items: center;
-    margin-bottom: 0.8rem;
+    flex-direction: column;
+    gap: 1rem;
 }
 
-.category-badge,
-.stock-pill,
-.discount-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    border-radius: 999px;
-    padding: 0.45rem 0.75rem;
-    font-size: 0.82rem;
-    font-weight: 700;
-}
-
-.category-badge {
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
-}
-
-.stock-pill.in-stock {
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
-}
-
-.stock-pill.out-stock {
-    background: rgba(239, 68, 68, 0.12);
-    color: #b91c1c;
-}
-
-.purchase-card h1 {
-    margin: 0 0 0.75rem;
-    font-size: clamp(1.8rem, 3vw, 2.4rem);
-    line-height: 1.08;
-    letter-spacing: -0.04em;
-}
-
-.rating-row {
+.product-meta {
     display: flex;
-    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.category {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.2rem 0.6rem;
+    border-radius: 30px;
+}
+
+.stock {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 30px;
+}
+
+.stock.in-stock {
+    background: rgba(16, 185, 129, 0.1);
+    color: var(--success);
+}
+
+.stock.out-of-stock {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--danger);
+}
+
+.product-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0;
+    line-height: 1.2;
+}
+
+.rating {
+    display: flex;
     align-items: center;
     gap: 0.5rem;
-    color: var(--text-muted);
-    margin-bottom: 0.75rem;
 }
 
 .stars {
-    display: inline-flex;
-    gap: 0.2rem;
-    color: #f59e0b;
+    display: flex;
+    gap: 0.15rem;
+}
+
+.star {
+    color: #CCCCCC;
+    font-size: 0.9rem;
+}
+
+.star.full,
+.star.half {
+    color: #FFB800;
+}
+
+.rating-value,
+.rating-count {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+.price-block {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .price-row {
     display: flex;
-    align-items: flex-end;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.9rem 0;
-    border-top: 1px solid var(--border);
-    border-bottom: 1px solid var(--border);
-    margin-bottom: 0.9rem;
-}
-
-.price-stack {
-    display: flex;
-    flex-wrap: wrap;
     align-items: baseline;
-    gap: 0.7rem;
+    gap: 0.8rem;
 }
 
-.price-stack strong {
-    font-size: clamp(1.8rem, 4vw, 2.7rem);
-    letter-spacing: -0.04em;
-    color: var(--text);
+.current {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-.price-stack span {
+.original {
+    font-size: 1rem;
     color: var(--text-muted);
     text-decoration: line-through;
 }
 
-.discount-pill {
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
+.save-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.2rem 0.6rem;
+    border-radius: 30px;
 }
 
-.short-description {
-    color: var(--text-muted);
-    line-height: 1.75;
-    margin-bottom: 1rem;
+.description {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
 }
 
-.trust-grid {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.6rem;
-    margin-bottom: 1rem;
+.trust-signals {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    padding: 0.5rem 0;
 }
 
 .trust-item {
-    display: grid;
-    gap: 0.4rem;
-    place-items: center;
-    padding: 0.85rem 0.7rem;
-    border-radius: 1rem;
-    background: rgba(59, 130, 246, 0.05);
-    border: 1px solid var(--border);
-    text-align: center;
-}
-
-.trust-item i {
-    color: var(--primary);
-    font-size: 1.1rem;
-}
-
-.trust-item span {
-    font-size: 0.84rem;
-    color: var(--text);
-    line-height: 1.35;
-}
-
-.quantity-row {
-    display: grid;
-    grid-template-columns: minmax(160px, 0.6fr) minmax(0, 1fr);
-    gap: 0.75rem;
-    margin-bottom: 0.75rem;
-}
-
-.qty-control {
-    display: inline-flex;
+    display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 0.8rem;
-    border-radius: 999px;
-    padding: 0.45rem;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.75);
+    gap: 0.3rem;
+    font-size: 0.7rem;
+    color: var(--text-muted);
 }
 
-.qty-control button {
-    width: 2.25rem;
-    height: 2.25rem;
+.trust-icon {
+    font-size: 0.9rem;
+}
+
+.cart-controls {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+}
+
+.quantity {
+    display: flex;
+    align-items: center;
+    border: 1px solid var(--border-input);
+    border-radius: 40px;
+}
+
+.quantity button {
+    width: 2.5rem;
+    height: 2.8rem;
+    background: none;
     border: none;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.08);
-    color: var(--primary);
     font-size: 1.2rem;
-    font-weight: 700;
     cursor: pointer;
+    color: var(--text-primary);
+    transition: background 0.2s;
 }
 
-.qty-control button:disabled {
-    opacity: 0.35;
+.quantity button:hover:not(:disabled) {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+.quantity button:disabled {
+    opacity: 0.4;
     cursor: not-allowed;
 }
 
-.qty-control span {
-    min-width: 2rem;
+.quantity span {
+    min-width: 2.5rem;
     text-align: center;
-    font-weight: 800;
+    font-weight: 500;
 }
 
-.primary-btn {
+.btn-primary,
+.btn-outline {
+    flex: 1;
+    padding: 0.8rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-radius: 40px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+}
+
+.btn-primary {
+    background: var(--accent);
+    border: none;
+    color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+    background: #0052CC;
+    transform: translateY(-1px);
+}
+
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-outline {
+    background: none;
+    border: 1px solid var(--border-input);
+    color: var(--text-primary);
+}
+
+.btn-outline:hover:not(:disabled) {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.buy-now {
     width: 100%;
 }
 
-.toast-success {
+.success-toast {
     display: flex;
     align-items: center;
-    gap: 0.55rem;
-    margin-top: 0.8rem;
-    padding: 0.8rem 0.95rem;
-    border-radius: 1rem;
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
-    font-size: 0.92rem;
-    font-weight: 600;
+    gap: 0.5rem;
+    padding: 0.7rem 1rem;
+    background: rgba(16, 185, 129, 0.1);
+    border-left: 3px solid var(--success);
+    border-radius: 12px;
+    font-size: 0.8rem;
 }
 
 .meta-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.75rem;
-    margin-top: 1rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border-light);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    overflow: hidden;
 }
 
-.meta-card {
-    padding: 0.9rem;
-    border-radius: 1rem;
-    background: rgba(59, 130, 246, 0.05);
+.meta-item {
+    background: var(--bg-card);
+    padding: 0.8rem;
 }
 
-.meta-card span {
+.meta-label {
     display: block;
-    margin-bottom: 0.25rem;
+    font-size: 0.6rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--text-muted);
-    font-size: 0.84rem;
+    margin-bottom: 0.2rem;
 }
 
-.meta-card strong {
-    font-size: 0.95rem;
+.meta-value {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-primary);
 }
 
-.details-grid {
+/* Details section */
+.details-section {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.75fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px;
+    background: var(--border-light);
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
 }
 
 .detail-card {
-    padding: 1.25rem;
+    background: var(--bg-card);
+    padding: 2rem;
 }
 
-.detail-card.wide {
-    min-height: 100%;
+.detail-header {
+    margin-bottom: 1.2rem;
 }
 
-.section-head {
+.detail-kicker {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+}
+
+.detail-header h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.3rem;
+    font-weight: 600;
+    margin: 0.2rem 0 0;
+}
+
+.detail-text {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+}
+
+.highlights {
     display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 0.9rem;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
-.section-head h2 {
-    margin: 0;
-    font-size: 1.2rem;
-}
-
-.section-head span {
-    color: var(--text-muted);
-    font-size: 0.88rem;
-    white-space: nowrap;
-}
-
-.description-text {
-    color: var(--text);
-    line-height: 1.8;
-    margin-bottom: 1rem;
-}
-
-.feature-list {
-    display: grid;
-    gap: 0.7rem;
-}
-
-.feature-item {
+.highlight {
     display: flex;
-    gap: 0.6rem;
-    align-items: flex-start;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
 }
 
-.feature-item i {
-    color: #047857;
-    margin-top: 0.15rem;
+.highlight-icon {
+    color: var(--accent);
 }
 
-.spec-list {
-    display: grid;
-    gap: 0.75rem;
+.specs {
+    display: flex;
+    flex-direction: column;
 }
 
 .spec-row {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 1rem;
-    padding: 0.8rem 0.9rem;
-    border-radius: 1rem;
-    background: rgba(59, 130, 246, 0.05);
+    align-items: center;
+    padding: 0.8rem 0;
+    border-bottom: 1px solid var(--border-light);
 }
 
-.spec-row span {
+.spec-row:last-child {
+    border-bottom: none;
+}
+
+.spec-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--text-muted);
 }
 
+.spec-value {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+/* Related section */
 .related-section {
-    padding: 1.25rem;
+    padding: 2rem;
+    margin-top: 1rem;
 }
 
-.related-loading,
-.related-empty {
-    display: grid;
-    place-items: center;
-    gap: 0.6rem;
-    min-height: 200px;
-    color: var(--text-muted);
-    text-align: center;
+.related-header {
+    margin-bottom: 1.5rem;
 }
 
-.related-loading i,
-.related-empty i {
-    font-size: 1.8rem;
-    color: var(--primary);
+.related-kicker {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+}
+
+.related-header h2 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0.2rem 0 0;
 }
 
 .related-grid {
     display: grid;
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border-light);
+}
+
+.related-card {
+    background: var(--bg-card);
+}
+
+.related-link {
+    display: block;
+    text-decoration: none;
+}
+
+.related-image {
+    aspect-ratio: 3/4;
+    overflow: hidden;
+}
+
+.related-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+}
+
+.related-card:hover .related-image img {
+    transform: scale(1.02);
+}
+
+.related-info {
+    padding: 1rem;
+}
+
+.related-category {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    margin-bottom: 0.3rem;
+}
+
+.related-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.3rem;
+}
+
+.related-price {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.related-loading,
+.related-empty {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-muted);
+}
+
+.loading-spinner {
+    display: inline-block;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Empty state */
+.empty-state {
+    text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border-radius: 24px;
+    margin: 2rem;
+}
+
+.empty-icon {
+    font-size: 3rem;
+    font-family: 'Sora', sans-serif;
+    color: var(--accent);
+    opacity: 0.5;
+    margin-bottom: 1rem;
+}
+
+.empty-state h2 {
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.empty-state p {
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+}
+
+.empty-actions {
+    display: flex;
     gap: 1rem;
+    justify-content: center;
 }
 
-@keyframes shimmer {
-    0% {
-        background-position: 100% 0;
-    }
-    100% {
-        background-position: -100% 0;
-    }
+.btn-ghost {
+    background: none;
+    border: 1px solid var(--border-input);
+    padding: 0.6rem 1.2rem;
+    border-radius: 40px;
+    cursor: pointer;
+    font-weight: 500;
 }
 
-@media (max-width: 1180px) {
-    .product-hero,
-    .details-grid,
-    .skeleton-grid {
+/* Responsive */
+@media (max-width: 900px) {
+    .product-hero {
         grid-template-columns: 1fr;
+        gap: 2rem;
     }
 
-    .purchase-card {
-        position: static;
+    .details-section {
+        grid-template-columns: 1fr;
     }
 
     .related-grid {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-@media (max-width: 760px) {
-    .product-detail-page {
-        padding: 0 0.75rem 1.5rem;
-    }
-
-    .gallery-card,
-    .purchase-card,
-    .detail-card,
-    .related-section,
-    .error-card {
-        border-radius: 1.25rem;
-    }
-
-    .trust-grid,
-    .meta-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .quantity-row {
-        grid-template-columns: 1fr;
+@media (max-width: 600px) {
+    .product-hero {
+        padding: 1rem;
     }
 
     .related-grid {
         grid-template-columns: 1fr;
     }
 
-    .price-row {
-        align-items: flex-start;
+    .breadcrumb {
+        padding: 0.8rem 1rem;
+    }
+
+    .product-title {
+        font-size: 1.5rem;
+    }
+
+    .current {
+        font-size: 1.4rem;
+    }
+
+    .cart-controls {
         flex-direction: column;
+    }
+
+    .quantity {
+        width: 100%;
+    }
+
+    .quantity button {
+        flex: 1;
     }
 }
 </style>

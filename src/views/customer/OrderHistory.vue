@@ -1,219 +1,168 @@
 <template>
-    <div class="order-history-page">
-        <section class="orders-hero">
-            <div class="hero-copy">
-                <span class="eyebrow">My orders</span>
-                <h1>Track every purchase in one place.</h1>
-                <p>
-                    View your recent orders, check delivery status, and quickly reorder items you love.
-                </p>
+    <div class="orders-page" :class="{ dark: isDark }">
+        <div class="page-container">
+
+            <!-- Header -->
+            <div class="page-header">
+                <div class="brand-mark">Commercia</div>
+                <h1 class="page-title">Order history</h1>
+                <p class="page-sub">Track every purchase in one place.</p>
             </div>
 
-            <div class="hero-stats">
-                <article class="stat-card">
-                    <span>Total orders</span>
-                    <strong>{{ stats.totalOrders }}</strong>
-                </article>
-                <article class="stat-card">
-                    <span>Delivered</span>
-                    <strong>{{ stats.delivered }}</strong>
-                </article>
-                <article class="stat-card">
-                    <span>Processing</span>
-                    <strong>{{ stats.processing }}</strong>
-                </article>
-                <article class="stat-card accent">
-                    <span>Spent</span>
-                    <strong>৳{{ formatMoney(stats.totalSpent) }}</strong>
-                </article>
-            </div>
-        </section>
-
-        <section class="filter-bar">
-            <label class="search-field">
-                <i class="fas fa-search"></i>
-                <input v-model="searchQuery" type="text" placeholder="Search by order number or item name" />
-            </label>
-
-            <div class="status-chips">
-                <button
-                    v-for="item in statusFilters"
-                    :key="item.value"
-                    type="button"
-                    class="status-chip"
-                    :class="{ active: statusFilter === item.value }"
-                    @click="statusFilter = item.value"
-                >
-                    {{ item.label }}
-                </button>
+            <!-- Stats cards -->
+            <div class="stats-grid">
+                <div class="stat-card"><span>Total orders</span><strong>{{ stats.totalOrders }}</strong></div>
+                <div class="stat-card"><span>Delivered</span><strong>{{ stats.delivered }}</strong></div>
+                <div class="stat-card"><span>Processing</span><strong>{{ stats.processing }}</strong></div>
+                <div class="stat-card accent"><span>Total spent</span><strong>৳{{ formatMoney(stats.totalSpent)
+                        }}</strong></div>
             </div>
 
-            <button class="clear-btn" type="button" @click="clearFilters">
-                Clear filters
-            </button>
-        </section>
-
-        <div v-if="loadError" class="empty-state">
-            <div class="empty-card">
-                <div class="empty-icon">
-                    <i class="fas fa-triangle-exclamation"></i>
+            <!-- Filter bar -->
+            <div class="filter-bar">
+                <div class="search-field">
+                    <span class="search-icon">🔍</span>
+                    <input v-model="searchQuery" type="text" placeholder="Search by order number or item name" />
                 </div>
+                <div class="status-filters">
+                    <button v-for="item in statusFilters" :key="item.value" type="button" class="filter-chip"
+                        :class="{ active: statusFilter === item.value }" @click="statusFilter = item.value">{{
+                        item.label }}</button>
+                </div>
+                <button class="clear-btn" @click="clearFilters">Clear</button>
+            </div>
+
+            <!-- States -->
+            <div v-if="loadError" class="empty-state">
+                <div class="empty-icon">⚠️</div>
                 <h2>Unable to load orders</h2>
                 <p>{{ loadError }}</p>
-                <button type="button" class="btn-primary" @click="loadOrders">Try again</button>
+                <button class="btn-primary" @click="loadOrders">Try again</button>
             </div>
-        </div>
 
-        <div v-else-if="isLoading && !orders.length" class="empty-state">
-            <div class="empty-card">
-                <div class="empty-icon">
-                    <i class="fas fa-spinner fa-spin"></i>
-                </div>
+            <div v-else-if="isLoading && !orders.length" class="empty-state">
+                <div class="empty-icon">⋯</div>
                 <h2>Loading orders</h2>
-                <p>We are fetching your purchases from the backend.</p>
+                <p>Fetching your purchases from the backend.</p>
             </div>
-        </div>
 
-        <div v-else-if="!visibleOrders.length" class="empty-state">
-            <div class="empty-card">
-                <div class="empty-icon">
-                    <i class="fas fa-box-open"></i>
-                </div>
+            <div v-else-if="!visibleOrders.length" class="empty-state">
+                <div class="empty-icon">📦</div>
                 <h2>No orders yet</h2>
                 <p>Your completed purchases will appear here once you place an order.</p>
                 <router-link to="/products" class="btn-primary">Start shopping</router-link>
             </div>
-        </div>
 
-        <div v-else class="orders-list">
-            <article v-for="order in visibleOrders" :key="order.id" class="order-card">
-                <div class="order-head">
-                    <div>
-                        <div class="order-number">#{{ order.order_number || order.id }}</div>
-                        <div class="order-meta">
-                            <span>{{ formatDateTime(order.created_at) }}</span>
-                            <span>•</span>
-                            <span>{{ order.item_count || order.items?.length || 0 }} item(s)</span>
+            <!-- Orders list -->
+            <div v-else class="orders-list">
+                <article v-for="order in visibleOrders" :key="order.id" class="order-card">
+                    <div class="order-header">
+                        <div>
+                            <div class="order-number">#{{ order.order_number || order.id }}</div>
+                            <div class="order-meta">
+                                <span>{{ formatDateTime(order.created_at) }}</span>
+                                <span>•</span>
+                                <span>{{ order.item_count || order.items?.length || 0 }} item(s)</span>
+                            </div>
+                        </div>
+                        <div class="order-badges">
+                            <span class="badge" :class="`status-${getStatusMeta(order.status).tone}`">
+                                {{ getStatusMeta(order.status).label }}
+                            </span>
+                            <span class="badge payment" :class="`payment-${getPaymentMeta(order.payment_status).tone}`">
+                                {{ getPaymentMeta(order.payment_status).label }}
+                            </span>
                         </div>
                     </div>
 
-                    <div class="order-badges">
-                        <span class="badge" :class="`tone-${getStatusMeta(order.status).tone}`">
-                            <i :class="getStatusMeta(order.status).icon"></i>
-                            {{ getStatusMeta(order.status).label }}
-                        </span>
-                        <span class="badge subtle" :class="`tone-${getPaymentMeta(order.payment_status).tone}`">
-                            {{ getPaymentMeta(order.payment_status).label }}
-                        </span>
-                    </div>
-                </div>
-
-                <div class="order-body">
-                    <div class="order-preview">
-                        <div class="item-stack">
-                            <img
-                                v-for="item in order.items?.slice(0, 3)"
-                                :key="item.id"
-                                :src="getProductImage(item)"
-                                :alt="item.name"
-                            />
-                            <div v-if="(order.items?.length || 0) > 3" class="more-items">
-                                +{{ (order.items?.length || 0) - 3 }}
-                            </div>
-                        </div>
-                        <div class="preview-copy">
-                            <strong>{{ order.customer_name }}</strong>
-                            <p>{{ order.address_label }}</p>
-                        </div>
-                    </div>
-
-                    <div class="order-summary">
-                        <div class="summary-line">
-                            <span>Total</span>
-                            <strong>৳{{ formatMoney(order.total) }}</strong>
-                        </div>
-                        <div class="summary-line">
-                            <span>Delivery</span>
-                            <strong>{{ order.delivery_label }}</strong>
-                        </div>
-                        <div class="summary-line">
-                            <span>Payment</span>
-                            <strong>{{ order.payment_label }}</strong>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="order-actions">
-                    <button class="secondary-btn" type="button" @click="toggleOrder(order.id)">
-                        <i :class="expandedOrderId === order.id ? 'fas fa-chevron-up' : 'fas fa-chevron-down'"></i>
-                        {{ expandedOrderId === order.id ? 'Hide details' : 'View details' }}
-                    </button>
-                    <button class="primary-btn" type="button" @click="reorder(order)">
-                        <i class="fas fa-cart-shopping"></i>
-                        Reorder
-                    </button>
-                    <button class="ghost-btn" type="button" @click="openSuccess(order)">
-                        View receipt
-                    </button>
-                </div>
-
-                <transition name="fade-expand">
-                    <div v-if="expandedOrderId === order.id" class="expanded-panel">
-                        <div class="detail-grid">
-                            <div class="detail-card">
-                                <span class="detail-label">Shipping address</span>
-                                <strong>{{ order.address_label }}</strong>
-                                <p>{{ order.customer_mobile || '-' }}<br />{{ order.customer_email || '-' }}</p>
-                            </div>
-                            <div class="detail-card">
-                                <span class="detail-label">Delivery estimate</span>
-                                <strong>{{ order.estimated_delivery }}</strong>
-                                <p>{{ order.delivery_label }}</p>
-                            </div>
-                            <div class="detail-card">
-                                <span class="detail-label">Order note</span>
-                                <strong>{{ order.notes ? 'Included' : 'None' }}</strong>
-                                <p>{{ order.notes || 'No delivery note was added.' }}</p>
-                            </div>
-                        </div>
-
-                        <div class="timeline">
-                            <div
-                                v-for="(step, index) in buildTimeline(order)"
-                                :key="step.key"
-                                class="timeline-step"
-                                :class="{ active: index <= getProgressIndex(order.status) }"
-                            >
-                                <div class="step-dot">
-                                    <i :class="step.icon"></i>
+                    <div class="order-body">
+                        <div class="preview-section">
+                            <div class="item-preview">
+                                <img v-for="item in order.items?.slice(0, 3)" :key="item.id"
+                                    :src="getProductImage(item)" :alt="item.name" />
+                                <div v-if="(order.items?.length || 0) > 3" class="more-indicator">
+                                    +{{ (order.items?.length || 0) - 3 }}
                                 </div>
-                                <div class="step-copy">
-                                    <strong>{{ step.label }}</strong>
-                                    <p>{{ step.description }}</p>
-                                </div>
-                                <span class="step-time">{{ step.timestamp ? formatDateTime(step.timestamp) : 'Pending' }}</span>
+                            </div>
+                            <div class="shipping-preview">
+                                <strong>{{ order.customer_name }}</strong>
+                                <p>{{ order.address_label }}</p>
                             </div>
                         </div>
 
-                        <div class="line-item-grid">
-                            <article v-for="item in order.items" :key="item.id" class="line-item">
-                                <img :src="getProductImage(item)" :alt="item.name" />
-                                <div>
-                                    <strong>{{ item.name }}</strong>
-                                    <p>Qty {{ item.quantity }} · ৳{{ formatMoney(item.price) }}</p>
-                                </div>
-                                <span>৳{{ formatMoney(item.price * item.quantity) }}</span>
-                            </article>
+                        <div class="summary-section">
+                            <div class="summary-row"><span>Total</span><strong>৳{{ formatMoney(order.total) }}</strong>
+                            </div>
+                            <div class="summary-row"><span>Delivery</span><strong>{{ order.delivery_label }}</strong>
+                            </div>
+                            <div class="summary-row"><span>Payment</span><strong>{{ order.payment_label }}</strong>
+                            </div>
                         </div>
                     </div>
-                </transition>
-            </article>
+
+                    <div class="order-actions">
+                        <button class="btn-outline" @click="toggleOrder(order.id)">
+                            <span>{{ expandedOrderId === order.id ? '−' : '+' }}</span>
+                            {{ expandedOrderId === order.id ? 'Hide details' : 'View details' }}
+                        </button>
+                        <button class="btn-primary small" @click="reorder(order)">Reorder</button>
+                        <button class="btn-outline" @click="openSuccess(order)">Receipt</button>
+                    </div>
+
+                    <transition name="expand">
+                        <div v-if="expandedOrderId === order.id" class="expanded-content">
+                            <div class="details-grid">
+                                <div class="detail-block">
+                                    <div class="detail-label">Shipping address</div>
+                                    <strong>{{ order.address_label }}</strong>
+                                    <p>{{ order.customer_mobile || '-' }}<br />{{ order.customer_email || '-' }}</p>
+                                </div>
+                                <div class="detail-block">
+                                    <div class="detail-label">Delivery estimate</div>
+                                    <strong>{{ order.estimated_delivery }}</strong>
+                                    <p>{{ order.delivery_label }}</p>
+                                </div>
+                                <div class="detail-block">
+                                    <div class="detail-label">Order note</div>
+                                    <strong>{{ order.notes ? 'Included' : 'None' }}</strong>
+                                    <p>{{ order.notes || 'No delivery note was added.' }}</p>
+                                </div>
+                            </div>
+
+                            <div class="timeline">
+                                <div v-for="(step, idx) in buildTimeline(order)" :key="step.key" class="timeline-step"
+                                    :class="{ active: idx <= getProgressIndex(order.status) }">
+                                    <div class="step-icon">{{ getStepIcon(step.icon) }}</div>
+                                    <div class="step-info">
+                                        <strong>{{ step.label }}</strong>
+                                        <p>{{ step.description }}</p>
+                                    </div>
+                                    <div class="step-time">{{ step.timestamp ? formatDateTime(step.timestamp) :
+                                        'Pending' }}</div>
+                                </div>
+                            </div>
+
+                            <div class="items-list">
+                                <div v-for="item in order.items" :key="item.id" class="item-row">
+                                    <img :src="getProductImage(item)" :alt="item.name" />
+                                    <div class="item-details">
+                                        <strong>{{ item.name }}</strong>
+                                        <p>Qty {{ item.quantity }} · ৳{{ formatMoney(item.price) }}</p>
+                                    </div>
+                                    <div class="item-total">৳{{ formatMoney(item.price * item.quantity) }}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </transition>
+                </article>
+            </div>
+
         </div>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/utils/axios'
 import { useCartStore } from '@/stores/cart'
@@ -230,6 +179,27 @@ import {
 const router = useRouter()
 const cartStore = useCartStore()
 const authStore = useCustomerAuthStore()
+
+// Dark mode detection
+const isDark = ref(false)
+const checkDarkMode = () => {
+    isDark.value = document.documentElement.classList.contains('dark') ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+}
+const updateDarkMode = () => {
+    checkDarkMode()
+}
+const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)')
+darkModeMedia.addEventListener('change', updateDarkMode)
+onMounted(() => {
+    checkDarkMode()
+    const observer = new MutationObserver(checkDarkMode)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    onUnmounted(() => observer.disconnect())
+})
+onUnmounted(() => {
+    darkModeMedia.removeEventListener('change', updateDarkMode)
+})
 
 const searchQuery = ref('')
 const statusFilter = ref('all')
@@ -250,7 +220,6 @@ const loadOrders = async () => {
     authStore.loadUser?.()
     isLoading.value = true
     loadError.value = ''
-
     try {
         const response = await api.get('orders')
         const list = normalizeOrdersList(response.data)
@@ -266,26 +235,22 @@ const loadOrders = async () => {
 
 const visibleOrders = computed(() => {
     const query = searchQuery.value.trim().toLowerCase()
-
-    return orders.value.filter((order) => {
+    return orders.value.filter(order => {
         const matchesStatus = statusFilter.value === 'all' || order.status === statusFilter.value
-        const matchesQuery =
-            !query ||
+        const matchesQuery = !query ||
             String(order.order_number || order.id).toLowerCase().includes(query) ||
             String(order.customer_name || '').toLowerCase().includes(query) ||
             String(order.address_label || '').toLowerCase().includes(query) ||
-            (order.items || []).some((item) => String(item.name || '').toLowerCase().includes(query))
-
+            (order.items || []).some(item => String(item.name || '').toLowerCase().includes(query))
         return matchesStatus && matchesQuery
     })
 })
 
 const stats = computed(() => {
     const totalOrders = orders.value.length
-    const delivered = orders.value.filter((order) => order.status === 'delivered').length
-    const processing = orders.value.filter((order) => order.status === 'processing').length
-    const totalSpent = orders.value.reduce((sum, order) => sum + Number(order.total || 0), 0)
-
+    const delivered = orders.value.filter(o => o.status === 'delivered').length
+    const processing = orders.value.filter(o => o.status === 'processing').length
+    const totalSpent = orders.value.reduce((sum, o) => sum + Number(o.total || 0), 0)
     return { totalOrders, delivered, processing, totalSpent }
 })
 
@@ -304,8 +269,7 @@ const openSuccess = (order) => {
 
 const reorder = (order) => {
     if (!order?.items?.length) return
-
-    order.items.forEach((item) => {
+    order.items.forEach(item => {
         const product = item.product || {
             id: item.product_id || item.id,
             name: item.name,
@@ -314,58 +278,26 @@ const reorder = (order) => {
             images: item.images,
             slug: item.slug || null,
         }
-
         cartStore.addItem(product, item.quantity || 1)
     })
-
     router.push('/cart')
 }
 
 const buildTimeline = (order) => {
-    const base = order?.timeline?.length
-        ? order.timeline
-        : [
-              {
-                  key: 'placed',
-                  label: 'Order placed',
-                  description: 'We have received your order.',
-                  timestamp: order?.created_at || null,
-                  icon: 'fas fa-circle-check',
-              },
-              {
-                  key: 'packed',
-                  label: 'Packed',
-                  description: 'Items are being prepared for dispatch.',
-                  timestamp: null,
-                  icon: 'fas fa-box',
-              },
-              {
-                  key: 'shipped',
-                  label: 'Shipped',
-                  description: 'Your parcel is on the way.',
-                  timestamp: null,
-                  icon: 'fas fa-truck-fast',
-              },
-              {
-                  key: 'delivered',
-                  label: 'Delivered',
-                  description: 'The parcel has arrived successfully.',
-                  timestamp: null,
-                  icon: 'fas fa-circle-check',
-              },
-          ]
+    const base = order?.timeline?.length ? order.timeline : [
+        { key: 'placed', label: 'Order placed', description: 'We have received your order.', timestamp: order?.created_at || null, icon: 'check' },
+        { key: 'packed', label: 'Packed', description: 'Items are being prepared for dispatch.', timestamp: null, icon: 'box' },
+        { key: 'shipped', label: 'Shipped', description: 'Your parcel is on the way.', timestamp: null, icon: 'truck' },
+        { key: 'delivered', label: 'Delivered', description: 'The parcel has arrived successfully.', timestamp: null, icon: 'check' }
+    ]
+    return base
+}
 
-    return base.map((step) => ({
-        ...step,
-        icon:
-            step.key === 'placed'
-                ? 'fas fa-circle-check'
-                : step.key === 'packed'
-                  ? 'fas fa-box'
-                  : step.key === 'shipped'
-                    ? 'fas fa-truck-fast'
-                    : 'fas fa-circle-check',
-    }))
+const getStepIcon = (icon) => {
+    if (icon === 'check' || icon === 'fas fa-circle-check') return '✓'
+    if (icon === 'box' || icon === 'fas fa-box') return '📦'
+    if (icon === 'truck' || icon === 'fas fa-truck-fast') return '🚚'
+    return '✓'
 }
 
 const getProgressIndex = (status) => {
@@ -374,607 +306,639 @@ const getProgressIndex = (status) => {
     return idx === -1 ? 1 : idx
 }
 
-onMounted(() => {
-    loadOrders()
-})
+onMounted(() => { loadOrders() })
 </script>
 
 <style scoped>
-.order-history-page {
-    max-width: 1440px;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap');
+
+/* CSS Variables for light/dark mode */
+.orders-page {
+    --bg-page: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --text-primary: #1A2A3A;
+    --text-secondary: #5A6A7A;
+    --text-muted: #7A8A9A;
+    --border-light: #E8ECF0;
+    --border-input: #CCD4DC;
+    --accent: #0066FF;
+    --accent-soft: #F0F7FF;
+    --stat-bg: #FFFFFF;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
+}
+
+.orders-page.dark {
+    --bg-page: #0F1218;
+    --bg-card: #1A1E26;
+    --text-primary: #E8EDF2;
+    --text-secondary: #9AA8B8;
+    --text-muted: #6B7A8A;
+    --border-light: #2A2F3A;
+    --border-input: #3A4050;
+    --accent: #3B82F6;
+    --accent-soft: #1E2A3A;
+    --stat-bg: #2A2F3A;
+    --shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.orders-page {
+    background: var(--bg-page);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+.page-container {
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 1rem 2rem;
+    padding: 0 2rem 4rem;
 }
 
-.orders-hero {
-    display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.9fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 1.5rem;
-    border-radius: 1.75rem;
-    background:
-        radial-gradient(circle at top right, rgba(20, 184, 166, 0.16), transparent 28%),
-        linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(15, 23, 42, 0.02));
+/* Header */
+.page-header {
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 2rem;
 }
 
-.eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.45rem 0.8rem;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
+.brand-mark {
+    font-family: 'Sora', sans-serif;
     font-weight: 700;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    display: inline-block;
+    margin-bottom: 1rem;
 }
 
-.hero-copy h1 {
-    margin: 1rem 0 0.7rem;
-    font-size: clamp(2rem, 3.5vw, 3.4rem);
-    line-height: 1.02;
-    letter-spacing: -0.04em;
+.page-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
 }
 
-.hero-copy p {
-    max-width: 58ch;
-    color: var(--text-muted);
-    line-height: 1.7;
+.page-sub {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
 }
 
-.hero-stats {
+/* Stats cards */
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
 }
 
 .stat-card {
+    background: var(--stat-bg);
+    border-radius: 16px;
     padding: 1rem;
-    border-radius: 1.25rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
+    border: 1px solid var(--border-light);
 }
 
 .stat-card span {
     display: block;
-    margin-bottom: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
 }
 
 .stat-card strong {
-    font-size: 1.45rem;
-    color: var(--text);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 .stat-card.accent {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(20, 184, 166, 0.12));
+    background: var(--accent-soft);
+    border-color: var(--accent);
 }
 
+.stat-card.accent strong {
+    color: var(--accent);
+}
+
+/* Filter bar */
 .filter-bar {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 0.85rem;
-    margin-bottom: 1rem;
-    padding: 1rem;
-    border-radius: 1.25rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
+    gap: 1rem;
+    margin-bottom: 2rem;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-light);
 }
 
 .search-field {
     display: flex;
     align-items: center;
-    gap: 0.7rem;
-    flex: 1 1 320px;
-    padding: 0.8rem 1rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid var(--border);
+    gap: 0.5rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-input);
+    border-radius: 40px;
+    padding: 0.5rem 1rem;
+    flex: 1 1 280px;
 }
 
-.search-field i {
+.search-icon {
+    font-size: 0.9rem;
     color: var(--text-muted);
 }
 
 .search-field input {
-    flex: 1;
     border: none;
     background: transparent;
     outline: none;
-    color: var(--text);
+    font-size: 0.85rem;
+    width: 100%;
+    color: var(--text-primary);
 }
 
-.status-chips {
+.status-filters {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.6rem;
+    gap: 0.5rem;
 }
 
-.status-chip,
-.clear-btn {
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.75);
-    color: var(--text);
-    border-radius: 999px;
-    padding: 0.65rem 0.95rem;
-    font-weight: 600;
+.filter-chip {
+    background: none;
+    border: 1px solid var(--border-input);
+    border-radius: 30px;
+    padding: 0.4rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: transform 0.2s, border-color 0.2s, background 0.2s;
+    transition: all 0.2s;
+    color: var(--text-primary);
 }
 
-.status-chip:hover,
-.clear-btn:hover {
-    transform: translateY(-1px);
-    border-color: rgba(59, 130, 246, 0.35);
-}
-
-.status-chip.active {
-    background: var(--primary);
-    color: #fff;
-    border-color: var(--primary);
+.filter-chip.active {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: white;
 }
 
 .clear-btn {
-    margin-left: auto;
+    background: none;
+    border: none;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.4rem 1rem;
 }
 
+.clear-btn:hover {
+    color: var(--accent);
+}
+
+/* Empty state */
 .empty-state {
-    display: grid;
-    place-items: center;
-    padding: 2rem 0;
-}
-
-.empty-card {
-    width: min(100%, 500px);
-    padding: 2rem;
     text-align: center;
-    border-radius: 1.5rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
 }
 
 .empty-icon {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto 1rem;
-    display: grid;
-    place-items: center;
-    border-radius: 1.2rem;
-    color: var(--primary);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(20, 184, 166, 0.16));
-    font-size: 1.6rem;
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
 }
 
-.empty-card h2 {
+.empty-state h2 {
+    font-size: 1.3rem;
+    font-weight: 600;
     margin-bottom: 0.5rem;
+    color: var(--text-primary);
 }
 
-.empty-card p {
-    color: var(--text-muted);
-    margin-bottom: 1.25rem;
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 1.2rem;
 }
 
 .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border: none;
-    border-radius: 999px;
-    padding: 0.9rem 1.35rem;
-    background: var(--primary);
+    display: inline-block;
+    background: var(--accent);
     color: white;
+    border: none;
+    border-radius: 40px;
+    padding: 0.7rem 1.5rem;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
     text-decoration: none;
-    font-weight: 700;
-    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.25);
 }
 
+.btn-primary.small {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+}
+
+/* Orders list */
 .orders-list {
-    display: grid;
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
 }
 
 .order-card {
-    padding: 1.25rem;
-    border-radius: 1.5rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
+    background: var(--bg-card);
+    border-radius: 20px;
+    padding: 1.2rem;
+    border: 1px solid var(--border-light);
+    transition: box-shadow 0.2s;
 }
 
-.order-head {
+.order-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+.order-header {
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
     gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .order-number {
-    font-size: 1.15rem;
-    font-weight: 800;
-    color: var(--text);
+    font-family: 'Sora', sans-serif;
+    font-weight: 700;
+    font-size: 1.1rem;
 }
 
 .order-meta {
     display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 0.45rem;
-    margin-top: 0.35rem;
+    gap: 0.5rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    margin-top: 0.2rem;
 }
 
 .order-badges {
     display: flex;
-    flex-wrap: wrap;
     gap: 0.5rem;
-    justify-content: flex-end;
+    flex-wrap: wrap;
 }
 
 .badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.45rem 0.75rem;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 700;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.25rem 0.7rem;
+    border-radius: 30px;
 }
 
-.badge.subtle {
-    background: rgba(148, 163, 184, 0.12);
+.badge.status-success {
+    background: #E8F5E9;
+    color: #2E7D32;
 }
 
-.tone-warning {
-    background: rgba(245, 158, 11, 0.12);
-    color: #92400e;
+.badge.status-info {
+    background: #E3F2FD;
+    color: #1565C0;
 }
 
-.tone-info {
-    background: rgba(59, 130, 246, 0.12);
-    color: #1d4ed8;
+.badge.status-warning {
+    background: #FFF3E0;
+    color: #E65100;
 }
 
-.tone-primary {
-    background: rgba(14, 165, 233, 0.12);
-    color: #0369a1;
+.badge.status-danger {
+    background: #FFEBEE;
+    color: #C62828;
 }
 
-.tone-accent {
-    background: rgba(20, 184, 166, 0.12);
-    color: #0f766e;
+.badge.payment {
+    background: var(--border-light);
+    color: var(--text-secondary);
 }
 
-.tone-success {
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
-}
-
-.tone-danger {
-    background: rgba(239, 68, 68, 0.12);
-    color: #b91c1c;
-}
-
+/* Order body */
 .order-body {
     display: grid;
-    grid-template-columns: minmax(0, 1.4fr) minmax(260px, 0.8fr);
+    grid-template-columns: 1fr 240px;
     gap: 1rem;
-    margin-top: 1rem;
+    margin-bottom: 1rem;
 }
 
-.order-preview {
-    display: flex;
-    gap: 1rem;
-    align-items: center;
-    min-width: 0;
-}
-
-.item-stack {
+.preview-section {
     display: flex;
     align-items: center;
+    gap: 1rem;
 }
 
-.item-stack img,
-.more-items {
-    width: 52px;
-    height: 52px;
-    border-radius: 0.9rem;
-    border: 2px solid var(--card);
-    box-shadow: var(--shadow);
+.item-preview {
+    display: flex;
+    align-items: center;
 }
 
-.item-stack img {
+.item-preview img {
+    width: 48px;
+    height: 56px;
     object-fit: cover;
-    margin-left: -0.55rem;
-    background: var(--bg);
+    border-radius: 8px;
+    background: var(--border-light);
+    margin-left: -6px;
+    border: 1px solid var(--bg-card);
 }
 
-.item-stack img:first-child {
+.item-preview img:first-child {
     margin-left: 0;
 }
 
-.more-items {
-    margin-left: -0.55rem;
-    display: grid;
-    place-items: center;
-    background: rgba(59, 130, 246, 0.08);
-    color: var(--primary);
-    font-weight: 800;
-}
-
-.preview-copy {
-    min-width: 0;
-}
-
-.preview-copy strong {
-    display: block;
-    margin-bottom: 0.2rem;
-}
-
-.preview-copy p {
-    margin: 0;
-    color: var(--text-muted);
-    line-height: 1.55;
-}
-
-.order-summary {
-    padding: 1rem;
-    border-radius: 1.25rem;
-    background: rgba(59, 130, 246, 0.05);
-    display: grid;
-    gap: 0.7rem;
-}
-
-.summary-line {
+.more-indicator {
+    width: 48px;
+    height: 56px;
+    background: var(--border-light);
+    border-radius: 8px;
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    color: var(--text);
-}
-
-.summary-line span {
-    color: var(--text-muted);
-}
-
-.order-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1rem;
-}
-
-.primary-btn,
-.secondary-btn,
-.ghost-btn {
-    display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 0.45rem;
-    border-radius: 999px;
-    padding: 0.8rem 1rem;
-    font-weight: 700;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    margin-left: -6px;
+}
+
+.shipping-preview strong {
+    display: block;
+    font-size: 0.85rem;
+}
+
+.shipping-preview p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.summary-section {
+    background: var(--bg-page);
+    border-radius: 12px;
+    padding: 0.8rem;
+}
+
+.summary-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    margin-bottom: 0.4rem;
+    color: var(--text-secondary);
+}
+
+.summary-row strong {
+    color: var(--text-primary);
+}
+
+/* Action buttons */
+.order-actions {
+    display: flex;
+    gap: 0.8rem;
+    flex-wrap: wrap;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-input);
+    border-radius: 30px;
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    font-weight: 500;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    color: var(--text-primary);
+    transition: all 0.2s;
 }
 
-.primary-btn {
-    border: none;
-    background: var(--primary);
-    color: #fff;
-    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.24);
+.btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
 }
 
-.secondary-btn,
-.ghost-btn {
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.72);
-    color: var(--text);
+.btn-primary.small {
+    background: var(--accent);
+    color: white;
 }
 
-.primary-btn:hover,
-.secondary-btn:hover,
-.ghost-btn:hover,
-.clear-btn:hover,
-.status-chip:hover {
-    transform: translateY(-1px);
+/* Expanded content */
+.expand-enter-active,
+.expand-leave-active {
+    transition: all 0.2s ease;
 }
 
-.expanded-panel {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
+.expand-enter-from,
+.expand-leave-to {
+    opacity: 0;
+    transform: translateY(-8px);
 }
 
-.detail-grid {
+.expanded-content {
+    margin-top: 1.2rem;
+    padding-top: 1.2rem;
+    border-top: 1px solid var(--border-light);
+}
+
+.details-grid {
     display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 0.85rem;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
 }
 
-.detail-card {
-    padding: 1rem;
-    border-radius: 1.15rem;
-    background: rgba(59, 130, 246, 0.05);
+.detail-block {
+    background: var(--bg-page);
+    border-radius: 12px;
+    padding: 0.8rem;
 }
 
 .detail-label {
-    display: inline-block;
-    margin-bottom: 0.35rem;
-    color: var(--text-muted);
-    font-size: 0.82rem;
+    font-size: 0.65rem;
     text-transform: uppercase;
-    letter-spacing: 0.08em;
-}
-
-.detail-card strong {
-    display: block;
-    margin-bottom: 0.35rem;
-}
-
-.detail-card p {
-    margin: 0;
+    letter-spacing: 0.05em;
     color: var(--text-muted);
-    line-height: 1.55;
+    margin-bottom: 0.3rem;
 }
 
+.detail-block strong {
+    font-size: 0.85rem;
+    display: block;
+    margin-bottom: 0.2rem;
+    color: var(--text-primary);
+}
+
+.detail-block p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+    line-height: 1.4;
+}
+
+/* Timeline */
 .timeline {
-    display: grid;
-    gap: 0.9rem;
-    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 1.2rem;
 }
 
 .timeline-step {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 0.85rem;
+    grid-template-columns: 28px 1fr auto;
+    gap: 0.8rem;
     align-items: flex-start;
-    opacity: 0.58;
+    opacity: 0.5;
 }
 
 .timeline-step.active {
     opacity: 1;
 }
 
-.step-dot {
-    width: 2.3rem;
-    height: 2.3rem;
-    display: grid;
-    place-items: center;
-    border-radius: 0.85rem;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
+.step-icon {
+    width: 28px;
+    height: 28px;
+    background: var(--accent-soft);
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.9rem;
+    color: var(--accent);
 }
 
-.step-copy strong {
+.step-info strong {
+    font-size: 0.8rem;
     display: block;
-    margin-bottom: 0.15rem;
+    margin-bottom: 0.1rem;
+    color: var(--text-primary);
 }
 
-.step-copy p {
+.step-info p {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
     margin: 0;
-    color: var(--text-muted);
-    line-height: 1.45;
 }
 
 .step-time {
+    font-size: 0.7rem;
     color: var(--text-muted);
-    font-size: 0.85rem;
     white-space: nowrap;
 }
 
-.line-item-grid {
-    display: grid;
-    gap: 0.75rem;
-    margin-top: 1rem;
+/* Items list */
+.items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
 }
 
-.line-item {
+.item-row {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-columns: 40px 1fr auto;
     gap: 0.8rem;
     align-items: center;
-    padding: 0.8rem;
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.62);
-    border: 1px solid var(--border);
+    padding: 0.5rem;
+    background: var(--bg-page);
+    border-radius: 12px;
 }
 
-.line-item img {
-    width: 52px;
-    height: 52px;
-    border-radius: 0.85rem;
+.item-row img {
+    width: 40px;
+    height: 48px;
     object-fit: cover;
+    border-radius: 8px;
 }
 
-.line-item strong {
+.item-details strong {
     display: block;
-    margin-bottom: 0.15rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.1rem;
+    color: var(--text-primary);
 }
 
-.line-item p {
+.item-details p {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
     margin: 0;
-    color: var(--text-muted);
-    font-size: 0.86rem;
 }
 
-.fade-expand-enter-active,
-.fade-expand-leave-active {
-    transition: all 0.25s ease;
+.item-total {
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: var(--text-primary);
 }
 
-.fade-expand-enter-from,
-.fade-expand-leave-to {
-    opacity: 0;
-    transform: translateY(-8px);
-}
+/* Responsive */
+@media (max-width: 800px) {
+    .page-container {
+        padding: 0 1rem 3rem;
+    }
 
-@media (max-width: 1100px) {
-    .orders-hero,
-    .order-body,
-    .detail-grid {
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .order-body {
         grid-template-columns: 1fr;
     }
 
-    .clear-btn {
-        margin-left: 0;
+    .details-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .timeline-step {
+        grid-template-columns: 28px 1fr;
+    }
+
+    .step-time {
+        grid-column: span 2;
+        margin-left: 36px;
+        white-space: normal;
     }
 }
 
-@media (max-width: 700px) {
-    .order-history-page {
-        padding: 0 0.75rem 1.5rem;
-    }
-
-    .orders-hero,
-    .order-card,
-    .filter-bar,
-    .empty-card {
-        border-radius: 1.25rem;
-    }
-
-    .hero-stats {
+@media (max-width: 500px) {
+    .stats-grid {
         grid-template-columns: 1fr;
     }
 
     .filter-bar {
-        padding: 0.85rem;
-    }
-
-    .status-chips {
-        width: 100%;
-    }
-
-    .status-chip {
-        flex: 1 1 auto;
-    }
-
-    .order-head,
-    .order-actions {
         flex-direction: column;
         align-items: stretch;
     }
 
-    .order-badges {
-        justify-content: flex-start;
+    .search-field {
+        width: 100%;
     }
 
-    .timeline-step,
-    .line-item {
-        grid-template-columns: 1fr;
+    .status-filters {
+        justify-content: center;
     }
+}
 
-    .step-time {
-        white-space: normal;
+@media (prefers-color-scheme: dark) {
+    .orders-page:not(.dark) {
+        --bg-page: #0F1218;
+        --bg-card: #1A1E26;
+        --text-primary: #E8EDF2;
+        --text-secondary: #9AA8B8;
+        --text-muted: #6B7A8A;
+        --border-light: #2A2F3A;
+        --border-input: #3A4050;
+        --accent: #3B82F6;
+        --accent-soft: #1E2A3A;
+        --stat-bg: #2A2F3A;
     }
 }
 </style>

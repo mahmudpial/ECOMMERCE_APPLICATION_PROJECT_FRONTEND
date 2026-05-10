@@ -1,166 +1,161 @@
 <template>
-    <div class="success-page">
-        <section class="success-hero">
-            <div class="success-copy">
-                <div class="success-badge">
-                    <i class="fas fa-circle-check"></i>
-                    Order confirmed
-                </div>
-                <h1>Thank you for your order.</h1>
-                <p v-if="order">
-                    We have received order <strong>#{{ order.order_number || order.id }}</strong> and are
-                    preparing it for shipment.
-                </p>
-                <p v-else>
-                    Your purchase was completed, but we could not load the latest order details from the backend yet.
-                </p>
+    <div class="order-success-page" :class="{ dark: isDark }">
+        <div class="page-container">
 
-                <div class="hero-actions">
-                    <router-link to="/products" class="primary-btn">Continue shopping</router-link>
-                    <router-link to="/orders" class="secondary-btn">View all orders</router-link>
-                    <a v-if="paymentUrl" :href="paymentUrl" target="_blank" rel="noopener" class="secondary-btn">Complete payment</a>
-                </div>
-            </div>
-
-            <aside v-if="order" class="receipt-card">
-                <div class="receipt-top">
-                    <span class="receipt-label">Receipt</span>
-                    <span class="receipt-chip">{{ statusMeta.label }}</span>
-                </div>
-
-                <div class="receipt-grid">
-                    <div class="receipt-item">
-                        <span>Order number</span>
-                        <strong>#{{ order.order_number || order.id }}</strong>
+            <!-- Hero section -->
+            <div class="success-hero">
+                <div class="success-content">
+                    <div class="success-badge">
+                        <span class="badge-icon">✓</span> Order confirmed
                     </div>
-                    <div class="receipt-item">
-                        <span>Total items</span>
-                        <strong>{{ totalItems }}</strong>
-                    </div>
-                    <div class="receipt-item">
-                        <span>Total</span>
-                        <strong>৳{{ formatMoney(order.total) }}</strong>
-                    </div>
-                    <div class="receipt-item">
-                        <span>Delivery</span>
-                        <strong>{{ order.delivery_label }}</strong>
-                    </div>
-                </div>
-            </aside>
-        </section>
-
-        <div v-if="order" class="content-grid">
-            <section class="detail-panel">
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <div>
-                            <span class="panel-kicker">What happens next</span>
-                            <h2>Order progress</h2>
-                        </div>
-                        <span class="summary-chip">{{ paymentMeta.label }}</span>
-                    </div>
-
-                    <div class="timeline">
-                        <article
-                            v-for="(step, index) in timeline"
-                            :key="step.key"
-                            class="timeline-step"
-                            :class="{ active: index <= progressIndex }"
-                        >
-                            <div class="step-dot">
-                                <i :class="step.icon"></i>
-                            </div>
-                            <div class="step-copy">
-                                <strong>{{ step.label }}</strong>
-                                <p>{{ step.description }}</p>
-                            </div>
-                            <span class="step-time">{{ step.timestamp ? formatDateTime(step.timestamp) : 'Pending' }}</span>
-                        </article>
+                    <h1>Thank you for your order.</h1>
+                    <p v-if="order">
+                        We have received order <strong>#{{ order.order_number || order.id }}</strong> and are
+                        preparing it for shipment.
+                    </p>
+                    <p v-else>
+                        Your purchase was completed, but we could not load the latest order details from the backend
+                        yet.
+                    </p>
+                    <div class="hero-actions">
+                        <router-link to="/products" class="btn-primary">Continue shopping</router-link>
+                        <router-link to="/orders" class="btn-secondary">View all orders</router-link>
+                        <a v-if="paymentUrl" :href="paymentUrl" target="_blank" rel="noopener"
+                            class="btn-secondary">Complete payment</a>
                     </div>
                 </div>
 
-                <div class="panel-card">
-                    <div class="panel-header">
-                        <div>
-                            <span class="panel-kicker">Delivery details</span>
-                            <h2>Shipping address</h2>
-                        </div>
+                <aside v-if="order" class="receipt-card">
+                    <div class="receipt-header">
+                        <span class="receipt-label">Receipt</span>
+                        <span class="status-chip">{{ statusMeta.label }}</span>
                     </div>
-
-                    <div class="address-card">
-                        <strong>{{ order.customer_name }}</strong>
-                        <p>{{ order.address_label }}</p>
-                        <div class="meta-row">
-                            <span><i class="fas fa-phone"></i> {{ order.customer_mobile || '-' }}</span>
-                            <span><i class="fas fa-envelope"></i> {{ order.customer_email || '-' }}</span>
+                    <div class="receipt-grid">
+                        <div class="receipt-item">
+                            <span>Order number</span>
+                            <strong>#{{ order.order_number || order.id }}</strong>
                         </div>
-                        <div class="meta-row">
-                            <span><i class="fas fa-truck-fast"></i> {{ order.estimated_delivery }}</span>
-                            <span><i class="fas fa-credit-card"></i> {{ order.payment_label }}</span>
+                        <div class="receipt-item">
+                            <span>Total items</span>
+                            <strong>{{ totalItems }}</strong>
                         </div>
-                    </div>
-                </div>
-            </section>
-
-            <aside class="summary-panel">
-                <div class="panel-card sticky">
-                    <div class="panel-header">
-                        <div>
-                            <span class="panel-kicker">Order summary</span>
-                            <h2>Items and totals</h2>
-                        </div>
-                    </div>
-
-                    <div class="items-list">
-                        <article v-for="item in order.items" :key="item.id" class="order-item">
-                            <img :src="getProductImage(item)" :alt="item.name" />
-                            <div class="item-copy">
-                                <strong>{{ item.name }}</strong>
-                                <span>Qty {{ item.quantity }} · ৳{{ formatMoney(item.price) }}</span>
-                            </div>
-                            <div class="item-total">৳{{ formatMoney(item.price * item.quantity) }}</div>
-                        </article>
-                    </div>
-
-                    <div class="totals">
-                        <div class="total-row">
-                            <span>Subtotal</span>
-                            <strong>৳{{ formatMoney(order.subtotal) }}</strong>
-                        </div>
-                        <div class="total-row">
-                            <span>Shipping</span>
-                            <strong>{{ order.shipping_fee === 0 ? 'Free' : `৳${formatMoney(order.shipping_fee)}` }}</strong>
-                        </div>
-                        <div class="total-row">
-                            <span>Discount</span>
-                            <strong>- ৳{{ formatMoney(order.discount) }}</strong>
-                        </div>
-                        <div class="total-row grand">
-                            <span>Total paid</span>
+                        <div class="receipt-item">
+                            <span>Total</span>
                             <strong>৳{{ formatMoney(order.total) }}</strong>
                         </div>
+                        <div class="receipt-item">
+                            <span>Delivery</span>
+                            <strong>{{ order.delivery_label }}</strong>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- Order details (if loaded) -->
+            <div v-if="order" class="order-details-grid">
+                <div class="details-column">
+                    <!-- Timeline / progress -->
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="card-kicker">What happens next</span>
+                                <h2>Order progress</h2>
+                            </div>
+                            <span class="payment-chip">{{ paymentMeta.label }}</span>
+                        </div>
+                        <div class="timeline">
+                            <div v-for="(step, idx) in timeline" :key="step.key" class="timeline-step"
+                                :class="{ active: idx <= progressIndex }">
+                                <div class="step-icon">
+                                    <span>{{ getStepIcon(step.icon) }}</span>
+                                </div>
+                                <div class="step-info">
+                                    <strong>{{ step.label }}</strong>
+                                    <p>{{ step.description }}</p>
+                                </div>
+                                <div class="step-time">{{ step.timestamp ? formatDateTime(step.timestamp) : 'Pending' }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Shipping address -->
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="card-kicker">Delivery details</span>
+                                <h2>Shipping address</h2>
+                            </div>
+                        </div>
+                        <div class="address-block">
+                            <strong>{{ order.customer_name }}</strong>
+                            <p>{{ order.address_label }}</p>
+                            <div class="meta-row">
+                                <span>📞 {{ order.customer_mobile || '-' }}</span>
+                                <span>✉️ {{ order.customer_email || '-' }}</span>
+                            </div>
+                            <div class="meta-row">
+                                <span>🚚 {{ order.estimated_delivery }}</span>
+                                <span>💳 {{ order.payment_label }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-            </aside>
-        </div>
 
-        <div v-else class="fallback-card">
-            <div class="fallback-icon">
-                <i class="fas fa-gift"></i>
+                <!-- Order summary sidebar -->
+                <aside class="summary-column">
+                    <div class="summary-card sticky">
+                        <div class="card-header">
+                            <div>
+                                <span class="card-kicker">Order summary</span>
+                                <h2>Items and totals</h2>
+                            </div>
+                        </div>
+
+                        <div class="items-list">
+                            <div v-for="item in order.items" :key="item.id" class="order-item">
+                                <img :src="getProductImage(item)" :alt="item.name" />
+                                <div class="item-details">
+                                    <strong>{{ item.name }}</strong>
+                                    <span>Qty {{ item.quantity }} · ৳{{ formatMoney(item.price) }}</span>
+                                </div>
+                                <div class="item-total">৳{{ formatMoney(item.price * item.quantity) }}</div>
+                            </div>
+                        </div>
+
+                        <div class="totals">
+                            <div class="total-row"><span>Subtotal</span><strong>৳{{ formatMoney(order.subtotal)
+                                    }}</strong></div>
+                            <div class="total-row"><span>Shipping</span><strong>{{ order.shipping_fee === 0 ? 'Free' :
+                                `৳${formatMoney(order.shipping_fee)}` }}</strong></div>
+                            <div class="total-row"><span>Discount</span><strong>- ৳{{ formatMoney(order.discount)
+                                    }}</strong></div>
+                            <div class="total-divider"></div>
+                            <div class="total-row grand"><span>Total paid</span><strong>৳{{ formatMoney(order.total)
+                                    }}</strong></div>
+                        </div>
+                    </div>
+                </aside>
             </div>
-            <h2>Order complete</h2>
-            <p>Open your order history to review recent purchases or continue shopping for more items.</p>
-            <p v-if="loadError" class="fallback-error">{{ loadError }}</p>
-            <div class="hero-actions centered">
-                <router-link to="/orders" class="primary-btn">View orders</router-link>
-                <router-link to="/products" class="secondary-btn">Browse products</router-link>
+
+            <!-- Fallback (order not loaded) -->
+            <div v-else class="fallback-card">
+                <div class="fallback-icon">—</div>
+                <h2>Order complete</h2>
+                <p>Open your order history to review recent purchases or continue shopping for more items.</p>
+                <p v-if="loadError" class="error-message">{{ loadError }}</p>
+                <div class="fallback-actions">
+                    <router-link to="/orders" class="btn-primary">View orders</router-link>
+                    <router-link to="/products" class="btn-secondary">Browse products</router-link>
+                </div>
             </div>
+
         </div>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/utils/axios'
 import { useCustomerAuthStore } from '@/stores/customerAuth'
@@ -177,6 +172,25 @@ import {
 const route = useRoute()
 const authStore = useCustomerAuthStore()
 
+// Dark mode detection
+const isDark = ref(false)
+const checkDarkMode = () => {
+    isDark.value = document.documentElement.classList.contains('dark') ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+}
+const updateDarkMode = () => { checkDarkMode() }
+const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)')
+darkModeMedia.addEventListener('change', updateDarkMode)
+onMounted(() => {
+    checkDarkMode()
+    const observer = new MutationObserver(checkDarkMode)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    onUnmounted(() => observer.disconnect())
+})
+onUnmounted(() => {
+    darkModeMedia.removeEventListener('change', updateDarkMode)
+})
+
 const order = ref(null)
 const loadError = ref('')
 
@@ -185,9 +199,7 @@ const paymentUrl = computed(() => String(route.query.payment_url || route.query.
 const loadOrder = async () => {
     authStore.loadUser?.()
     const queryOrder = String(route.query.order || route.query.id || '').trim()
-
     loadError.value = ''
-
     try {
         if (queryOrder) {
             const response = await api.get(`orders/${encodeURIComponent(queryOrder)}`)
@@ -195,7 +207,6 @@ const loadOrder = async () => {
             order.value = normalizeOrderRecord(payload)
             return
         }
-
         const response = await api.get('orders')
         const orders = normalizeOrdersList(response.data)
         order.value = orders[0] || null
@@ -220,440 +231,559 @@ const timeline = computed(() => {
     const base = order.value?.timeline?.length
         ? order.value.timeline
         : [
-              {
-                  key: 'placed',
-                  label: 'Order placed',
-                  description: 'We have received your order and started preparing it.',
-                  timestamp: order.value?.created_at || null,
-                  icon: 'fas fa-circle-check',
-              },
-              {
-                  key: 'packed',
-                  label: 'Packed',
-                  description: 'Your items will be packed and handed to the courier.',
-                  timestamp: null,
-                  icon: 'fas fa-box',
-              },
-              {
-                  key: 'shipped',
-                  label: 'Shipped',
-                  description: 'The parcel is moving through the delivery network.',
-                  timestamp: null,
-                  icon: 'fas fa-truck-fast',
-              },
-              {
-                  key: 'delivered',
-                  label: 'Delivered',
-                  description: 'Your order reaches the shipping address.',
-                  timestamp: null,
-                  icon: 'fas fa-circle-check',
-              },
-          ]
-
-    return base.map((step) => ({
+            { key: 'placed', label: 'Order placed', description: 'We have received your order and started preparing it.', timestamp: order.value?.created_at || null, icon: 'check' },
+            { key: 'packed', label: 'Packed', description: 'Your items will be packed and handed to the courier.', timestamp: null, icon: 'box' },
+            { key: 'shipped', label: 'Shipped', description: 'The parcel is moving through the delivery network.', timestamp: null, icon: 'truck' },
+            { key: 'delivered', label: 'Delivered', description: 'Your order reaches the shipping address.', timestamp: null, icon: 'check' }
+        ]
+    return base.map(step => ({
         ...step,
-        icon:
-            step.key === 'placed'
-                ? 'fas fa-circle-check'
-                : step.key === 'packed'
-                  ? 'fas fa-box'
-                  : step.key === 'shipped'
-                    ? 'fas fa-truck-fast'
-                    : 'fas fa-circle-check',
+        icon: step.key === 'placed' ? 'check' : step.key === 'packed' ? 'box' : step.key === 'shipped' ? 'truck' : 'check'
     }))
 })
 
-watch(
-    () => [route.query.order, route.query.id],
-    () => loadOrder(),
-)
+const getStepIcon = (icon) => {
+    if (icon === 'check') return '✓'
+    if (icon === 'box') return '📦'
+    if (icon === 'truck') return '🚚'
+    return '✓'
+}
 
-onMounted(() => {
-    loadOrder()
-})
+watch(() => [route.query.order, route.query.id], () => loadOrder())
+onMounted(() => { loadOrder() })
 </script>
 
 <style scoped>
-.success-page {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 0 1rem 2rem;
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap');
+
+/* Light mode (default) */
+.order-success-page {
+    --bg-page: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --bg-card-soft: #F8FAFC;
+    --text-primary: #1A2A3A;
+    --text-secondary: #5A6A7A;
+    --text-muted: #7A8A9A;
+    --border-light: #E8ECF0;
+    --border-input: #CCD4DC;
+    --accent: #0066FF;
+    --accent-soft: #F0F7FF;
+    --success: #10B981;
+    --danger: #EF4444;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.04);
 }
 
+/* Dark mode – triggered by parent .dark class */
+.order-success-page.dark {
+    --bg-page: #0F1218;
+    --bg-card: #1A1E26;
+    --bg-card-soft: #2A2F3A;
+    --text-primary: #E8EDF2;
+    --text-secondary: #9AA8B8;
+    --text-muted: #6B7A8A;
+    --border-light: #2A2F3A;
+    --border-input: #3A4050;
+    --accent: #3B82F6;
+    --accent-soft: #1E2A3A;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-lg: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.order-success-page {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+    background: var(--bg-page);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-primary);
+}
+
+.page-container {
+    width: 100%;
+}
+
+/* Hero section */
 .success-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(320px, 0.85fr);
+    grid-template-columns: 1fr 360px;
+    gap: 2rem;
+    margin-bottom: 2rem;
+    padding: 2rem;
+    background: var(--bg-card);
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
+    box-shadow: var(--shadow);
+}
+
+.success-content {
+    display: flex;
+    flex-direction: column;
     gap: 1rem;
-    margin-bottom: 1rem;
-    padding: 1.5rem;
-    border-radius: 1.75rem;
-    background:
-        radial-gradient(circle at top right, rgba(16, 185, 129, 0.18), transparent 30%),
-        radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.12), transparent 34%),
-        linear-gradient(135deg, rgba(15, 23, 42, 0.02), rgba(16, 185, 129, 0.05));
-}
-
-.success-copy h1 {
-    margin: 0.9rem 0 0.7rem;
-    font-size: clamp(2.2rem, 4vw, 3.8rem);
-    letter-spacing: -0.04em;
-    line-height: 1.02;
-}
-
-.success-copy p {
-    max-width: 58ch;
-    color: var(--text-muted);
-    line-height: 1.7;
 }
 
 .success-badge {
     display: inline-flex;
     align-items: center;
-    gap: 0.55rem;
-    padding: 0.55rem 0.85rem;
-    border-radius: 999px;
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
-    font-weight: 800;
-    font-size: 0.82rem;
+    gap: 0.5rem;
+    font-size: 0.7rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.4rem 1rem;
+    border-radius: 30px;
+    width: fit-content;
+}
+
+.badge-icon {
+    font-size: 0.9rem;
+}
+
+.success-content h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: clamp(2rem, 4vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    margin: 0;
+    color: var(--text-primary);
+}
+
+.success-content p {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+    margin: 0;
 }
 
 .hero-actions {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1.25rem;
+    gap: 0.8rem;
+    margin-top: 0.5rem;
 }
 
-.hero-actions.centered {
-    justify-content: center;
-}
-
-.primary-btn,
-.secondary-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 999px;
-    padding: 0.9rem 1.3rem;
-    font-weight: 700;
+.btn-primary,
+.btn-secondary {
+    display: inline-block;
+    padding: 0.7rem 1.5rem;
+    font-size: 0.8rem;
+    font-weight: 600;
     text-decoration: none;
-    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+    border-radius: 40px;
+    transition: all 0.2s;
+    cursor: pointer;
 }
 
-.primary-btn {
+.btn-primary {
+    background: var(--accent);
+    color: #FFFFFF;
     border: none;
-    background: linear-gradient(135deg, var(--primary), #0ea5e9);
-    color: #fff;
-    box-shadow: 0 16px 34px rgba(59, 130, 246, 0.24);
 }
 
-.secondary-btn {
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
-}
-
-.primary-btn:hover,
-.secondary-btn:hover {
+.btn-primary:hover {
+    background: #0052CC;
     transform: translateY(-1px);
 }
 
-.receipt-card,
-.panel-card,
-.fallback-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
+.btn-secondary {
+    background: transparent;
+    border: 1px solid var(--border-input);
+    color: var(--text-primary);
 }
 
+.btn-secondary:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+/* Receipt card */
 .receipt-card {
-    border-radius: 1.4rem;
-    padding: 1.15rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    padding: 1.2rem;
+    box-shadow: var(--shadow);
 }
 
-.receipt-top,
-.panel-header {
+.receipt-header {
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
+    align-items: center;
+    margin-bottom: 1rem;
 }
 
-.receipt-label,
-.panel-kicker {
-    display: inline-flex;
-    margin-bottom: 0.35rem;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+.receipt-label {
+    font-size: 0.7rem;
+    font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 0.08em;
     color: var(--text-muted);
 }
 
-.receipt-chip,
-.summary-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.75rem;
-    border-radius: 999px;
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
-    font-size: 0.82rem;
-    font-weight: 800;
-    white-space: nowrap;
+.status-chip {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.25rem 0.75rem;
+    border-radius: 30px;
 }
 
 .receipt-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
-    margin-top: 1rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
 }
 
 .receipt-item {
-    padding: 0.9rem;
-    border-radius: 1.1rem;
-    background: rgba(59, 130, 246, 0.05);
+    background: var(--bg-card-soft);
+    padding: 0.8rem;
+    border-radius: 12px;
 }
 
 .receipt-item span {
     display: block;
-    margin-bottom: 0.25rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
-    font-size: 0.85rem;
+    margin-bottom: 0.2rem;
 }
 
 .receipt-item strong {
-    display: block;
-    font-size: 0.96rem;
-    color: var(--text);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
-.content-grid {
+/* Order details grid */
+.order-details-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.8fr);
-    gap: 1rem;
+    grid-template-columns: 1fr 360px;
+    gap: 2rem;
 }
 
-.detail-panel {
-    display: grid;
-    gap: 1rem;
+.details-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
-.panel-card {
-    border-radius: 1.5rem;
-    padding: 1.25rem;
+.info-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 20px;
+    padding: 1.5rem;
+    box-shadow: var(--shadow);
 }
 
-.panel-card.sticky {
-    position: sticky;
-    top: 6rem;
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.2rem;
 }
 
-.panel-header h2 {
-    margin: 0;
+.card-kicker {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-muted);
+}
+
+.card-header h2 {
+    font-family: 'Sora', sans-serif;
     font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0.2rem 0 0;
+    color: var(--text-primary);
 }
 
+.payment-chip {
+    font-size: 0.65rem;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.25rem 0.7rem;
+    border-radius: 30px;
+    white-space: nowrap;
+}
+
+/* Timeline */
 .timeline {
-    display: grid;
-    gap: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
 }
 
 .timeline-step {
     display: grid;
-    grid-template-columns: auto minmax(0, 1fr) auto;
-    gap: 0.85rem;
+    grid-template-columns: 32px 1fr auto;
+    gap: 0.8rem;
     align-items: flex-start;
-    opacity: 0.54;
+    opacity: 0.5;
 }
 
 .timeline-step.active {
     opacity: 1;
 }
 
-.step-dot {
-    width: 2.3rem;
-    height: 2.3rem;
-    display: grid;
-    place-items: center;
-    border-radius: 0.85rem;
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
+.step-icon {
+    width: 32px;
+    height: 32px;
+    background: var(--accent-soft);
+    border-radius: 30px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: var(--accent);
 }
 
-.step-copy strong {
+.step-info strong {
     display: block;
-    margin-bottom: 0.15rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+    color: var(--text-primary);
 }
 
-.step-copy p,
-.address-card p {
+.step-info p {
     margin: 0;
-    color: var(--text-muted);
-    line-height: 1.55;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
 .step-time {
+    font-size: 0.7rem;
     color: var(--text-muted);
-    font-size: 0.85rem;
     white-space: nowrap;
 }
 
-.address-card {
-    display: grid;
-    gap: 0.75rem;
+/* Address block */
+.address-block {
+    background: var(--bg-card-soft);
+    border-radius: 16px;
     padding: 1rem;
-    border-radius: 1.15rem;
-    background: rgba(59, 130, 246, 0.05);
 }
 
-.address-card strong {
-    font-size: 1rem;
+.address-block strong {
+    display: block;
+    font-size: 0.9rem;
+    margin-bottom: 0.3rem;
+    color: var(--text-primary);
+}
+
+.address-block p {
+    margin: 0 0 0.8rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
 }
 
 .meta-row {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem 1rem;
+    gap: 1rem;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
     color: var(--text-muted);
 }
 
 .meta-row span {
     display: inline-flex;
     align-items: center;
-    gap: 0.45rem;
+    gap: 0.3rem;
+}
+
+/* Summary column */
+.summary-column {
+    position: relative;
+}
+
+.summary-card {
+    background: var(--bg-card-soft);
+    border-radius: 20px;
+    padding: 1.5rem;
+}
+
+.summary-card.sticky {
+    position: sticky;
+    top: 2rem;
 }
 
 .items-list {
-    display: grid;
+    display: flex;
+    flex-direction: column;
     gap: 0.8rem;
-    margin-top: 1rem;
+    margin: 1rem 0;
 }
 
 .order-item {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-columns: 48px 1fr auto;
     gap: 0.75rem;
     align-items: center;
-    padding: 0.85rem;
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.65);
-    border: 1px solid var(--border);
+    background: var(--bg-card);
+    padding: 0.7rem;
+    border-radius: 12px;
 }
 
 .order-item img {
-    width: 52px;
-    height: 52px;
+    width: 48px;
+    height: 56px;
     object-fit: cover;
-    border-radius: 0.85rem;
+    border-radius: 8px;
+    background: var(--bg-card-soft);
 }
 
-.item-copy strong {
+.item-details strong {
     display: block;
-    margin-bottom: 0.15rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.2rem;
+    color: var(--text-primary);
 }
 
-.item-copy span {
+.item-details span {
+    font-size: 0.7rem;
     color: var(--text-muted);
-    font-size: 0.85rem;
 }
 
 .item-total {
-    font-weight: 800;
+    font-weight: 700;
+    font-size: 0.8rem;
     white-space: nowrap;
+    color: var(--text-primary);
 }
 
 .totals {
-    display: grid;
-    gap: 0.7rem;
-    margin-top: 1rem;
+    border-top: 1px solid var(--border-light);
     padding-top: 1rem;
-    border-top: 1px solid var(--border);
+    margin-top: 0.5rem;
 }
 
 .total-row {
     display: flex;
-    align-items: center;
     justify-content: space-between;
-    gap: 1rem;
+    font-size: 0.8rem;
+    margin-bottom: 0.6rem;
+    color: var(--text-secondary);
 }
 
 .total-row span {
     color: var(--text-muted);
 }
 
-.total-row.grand {
-    padding-top: 0.2rem;
-    font-size: 1.05rem;
+.total-divider {
+    height: 1px;
+    background: var(--border-light);
+    margin: 0.5rem 0;
 }
 
+.total-row.grand {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
+/* Fallback card */
 .fallback-card {
-    width: min(100%, 560px);
-    margin: 0 auto;
-    padding: 2rem;
-    border-radius: 1.5rem;
+    max-width: 500px;
+    margin: 3rem auto;
     text-align: center;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 24px;
+    padding: 2rem;
 }
 
 .fallback-icon {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto 1rem;
-    display: grid;
-    place-items: center;
-    border-radius: 1.25rem;
-    background: linear-gradient(135deg, rgba(16, 185, 129, 0.16), rgba(59, 130, 246, 0.16));
-    color: #047857;
-    font-size: 1.7rem;
+    font-family: 'Sora', sans-serif;
+    font-size: 3rem;
+    color: var(--accent);
+    opacity: 0.5;
+    margin-bottom: 1rem;
 }
 
 .fallback-card h2 {
-    margin-bottom: 0.45rem;
+    font-weight: 600;
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary);
 }
 
 .fallback-card p {
-    color: var(--text-muted);
-    margin-bottom: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
 }
 
-@media (max-width: 1100px) {
+.error-message {
+    color: var(--danger);
+    font-size: 0.8rem;
+}
+
+.fallback-actions {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    margin-top: 1rem;
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+
     .success-hero,
-    .content-grid {
+    .order-details-grid {
         grid-template-columns: 1fr;
     }
 
-    .panel-card.sticky {
+    .summary-card.sticky {
         position: static;
+    }
+
+    .order-success-page {
+        padding: 0 1rem 3rem;
     }
 }
 
 @media (max-width: 700px) {
-    .success-page {
-        padding: 0 0.75rem 1.5rem;
-    }
-
-    .success-hero,
-    .receipt-card,
-    .panel-card,
-    .fallback-card {
-        border-radius: 1.25rem;
+    .success-hero {
+        padding: 1.2rem;
     }
 
     .receipt-grid {
         grid-template-columns: 1fr;
     }
 
-    .timeline-step,
-    .order-item {
-        grid-template-columns: 1fr;
+    .timeline-step {
+        grid-template-columns: 28px 1fr;
+        gap: 0.5rem;
     }
 
     .step-time {
+        grid-column: span 2;
         white-space: normal;
+        margin-left: 36px;
+    }
+
+    .order-item {
+        grid-template-columns: 40px 1fr auto;
+    }
+
+    .order-item img {
+        width: 40px;
+        height: 48px;
+    }
+
+    .hero-actions {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .btn-primary,
+    .btn-secondary {
+        text-align: center;
     }
 }
 </style>

@@ -11,7 +11,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useCustomerAuthStore } from '@/stores/customerAuth'
 
 const routes = [
-  // here is my Admin routes
+  // Admin routes
   {
     path: '/admin/login',
     name: 'admin.login',
@@ -29,17 +29,15 @@ const routes = [
       { path: 'brands', name: 'admin.brands', component: BrandsIndex },
       { path: 'orders', name: 'admin.orders', component: OrdersIndex },
       { path: 'users', name: 'admin.users', component: UsersIndex },
-      // { path: '', redirect: 'dashboard' }, // optional redirect
     ],
   },
 
-  // here is my Customer routes
+  // Customer routes
   {
     path: '/',
     component: () => import('@/layout/CustomerLayout.vue'),
     children: [
       { path: '', name: 'home', component: () => import('@/views/customer/Home.vue') },
-
       {
         path: 'products',
         name: 'products',
@@ -95,32 +93,35 @@ const router = createRouter({
   routes,
 })
 
-// Combined navigation guard for both admin and customer
-router.beforeEach((to, from, next) => {
+// Combined navigation guard – updated for Vue Router 4 (return values instead of calling next)
+router.beforeEach((to, from) => {
   const authStore = useAuthStore()
   const customerAuth = useCustomerAuthStore()
   const isAdminAuthenticated = authStore.isAuthenticated
   const isCustomerAuthenticated = customerAuth.isAuthenticated
 
-  // Admin guest guard (login page)
+  // Admin guest guard (trying to access login page while already logged in)
   if (to.meta.requireGuest && isAdminAuthenticated) {
-    return next('/admin/dashboard')
+    return '/admin/dashboard'
   }
-  // Admin auth guard
+
+  // Admin auth guard (requires authentication but not logged in)
   if (to.meta.requireAuth && !isAdminAuthenticated) {
-    return next('/admin/login')
+    return '/admin/login'
   }
 
-  // Customer auth guard (for routes like checkout, profile, orders)
+  // Customer auth guard (routes like checkout, profile, orders)
   if (to.meta.requiresAuth && !isCustomerAuthenticated) {
-    return next({ path: '/login', query: { redirect: to.fullPath } })
-  }
-  // Customer guest guard (login/register pages)
-  if ((to.path === '/login' || to.path === '/register') && isCustomerAuthenticated) {
-    return next('/profile')
+    return { path: '/login', query: { redirect: to.fullPath } }
   }
 
-  next()
+  // Customer guest guard (login/register pages when already logged in)
+  if ((to.path === '/login' || to.path === '/register') && isCustomerAuthenticated) {
+    return '/profile'
+  }
+
+  // Allow navigation
+  return undefined
 })
 
 export default router

@@ -1,59 +1,66 @@
 <template>
-    <div class="login-page">
+    <div class="login-page" :class="{ dark: isDark }">
         <div class="login-card">
-            <div class="login-header">
-                <h2>Welcome Back</h2>
-                <p>Login with your mobile number</p>
-            </div>
+            <div class="brand-mark">Commercia</div>
+            <div class="badge-label">Secure access</div>
+            <h1 class="card-title">Welcome back</h1>
+            <p class="card-subtitle">Login with your mobile number</p>
 
-            <!-- Error / success messages -->
             <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
             <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
 
-            <!-- Step 1: Mobile number request -->
+            <!-- Step 1: Request OTP -->
             <form v-if="!otpRequested" @submit.prevent="requestOtp">
-                <div class="input-group">
-                    <label>Mobile Number</label>
-                    <div class="phone-input">
-                        <select v-model="countryCode" class="country-code">
-                            <option value="+880">🇧🇩 +880</option>
-                        </select>
-                        <input type="tel" v-model="mobileNumber" placeholder="1712345678" required
-                            :disabled="loading" />
+                <div class="field-group">
+                    <label>Mobile number</label>
+                    <div class="phone-row">
+                        <div class="country-select">
+                            <select v-model="countryCode" :disabled="loading" class="country-code">
+                                <option value="+880">🇧🇩 +880</option>
+                                <option value="+91">🇮🇳 +91</option>
+                                <option value="+1">🇺🇸 +1</option>
+                                <option value="+44">🇬🇧 +44</option>
+                            </select>
+                        </div>
+                        <div class="mobile-input">
+                            <div class="input-wrapper">
+                                <span class="input-icon">📱</span>
+                                <input type="tel" v-model="mobileNumber" placeholder="1712345678" required
+                                    :disabled="loading" autocomplete="off" />
+                            </div>
+                        </div>
                     </div>
-                    <small class="phone-hint">
-                        Enter the same mobile number format saved in your account. Do not include the country code.
-                    </small>
+                    <small class="field-hint">Enter the same mobile number format saved in your account. Do not include
+                        the country code.</small>
                 </div>
+
                 <button type="submit" class="btn-primary" :disabled="loading">
-                    <i v-if="loading" class="fas fa-spinner fa-spin"></i>
-                    <span v-else>Send OTP</span>
+                    <span v-if="loading">Sending...</span>
+                    <span v-else>Send verification code</span>
                 </button>
-                <p class="register-link">
-                    Don't have an account? <router-link to="/register">Register</router-link>
-                </p>
+                <p class="form-footer">Don't have an account? <router-link to="/register">Register</router-link></p>
             </form>
 
-            <!-- Step 2: OTP verification -->
+            <!-- Step 2: OTP Verification -->
             <form v-else @submit.prevent="verifyOtp">
-                <div class="input-group">
-                    <label>Verification Code</label>
-                    <div class="otp-container">
+                <div class="field-group">
+                    <label>Verification code</label>
+                    <div class="otp-group">
                         <input v-for="(digit, idx) in otpDigits" :key="idx" type="text" maxlength="1"
                             inputmode="numeric" v-model="otpDigits[idx]" @input="handleOtpInput(idx, $event)"
                             @keydown.backspace="handleOtpBackspace(idx)" ref="otpInputs" class="otp-input"
                             :disabled="loading" />
                     </div>
-                    <p class="resend-link">
-                        Didn't receive code?
+                    <p class="resend-text">
+                        Didn't receive the code?
                         <button type="button" @click="resendOtp" :disabled="resendCooldown > 0" class="resend-btn">
-                            {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code' }}
+                            {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend code' }}
                         </button>
                     </p>
                 </div>
                 <button type="submit" class="btn-primary" :disabled="loading">
-                    <i v-if="loading" class="fas fa-spinner fa-spin"></i>
-                    <span v-else>Verify & Login</span>
+                    <span v-if="loading">Verifying...</span>
+                    <span v-else>Verify & login</span>
                 </button>
             </form>
         </div>
@@ -61,7 +68,7 @@
 </template>
 
 <script setup>
-import { ref, nextTick, onUnmounted } from 'vue'
+import { ref, nextTick, onUnmounted, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useCustomerAuthStore } from '@/stores/customerAuth'
 import api from '@/utils/axios'
@@ -70,8 +77,27 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useCustomerAuthStore()
 
+// Dark mode detection
+const isDark = ref(false)
+const checkDarkMode = () => {
+    isDark.value = document.documentElement.classList.contains('dark') ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+}
+const updateDarkMode = () => { checkDarkMode() }
+const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)')
+darkModeMedia.addEventListener('change', updateDarkMode)
+onMounted(() => {
+    checkDarkMode()
+    const observer = new MutationObserver(checkDarkMode)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    onUnmounted(() => observer.disconnect())
+})
+onUnmounted(() => {
+    darkModeMedia.removeEventListener('change', updateDarkMode)
+})
+
 const countryCode = ref('+880')
-const mobileNumber = ref('')
+const mobileNumber = ref('')  // ✅ Starts empty, no stray text
 const otpRequested = ref(false)
 const loading = ref(false)
 const errorMessage = ref('')
@@ -79,7 +105,6 @@ const successMessage = ref('')
 const otpDigits = ref(['', '', '', '', '', ''])
 const resendCooldown = ref(0)
 let cooldownTimer = null
-let fullOtp = ref('')
 const otpInputs = ref([])
 
 const startCooldown = (seconds = 60) => {
@@ -96,20 +121,16 @@ const startCooldown = (seconds = 60) => {
     }, 1000)
 }
 
-const buildIdentifier = () => {
-    // The backend looks up the account by the saved mobile value in the users table.
-    // Sending a country-code-prefixed number here can break the match if the DB stores
-    // the raw local digits (for example: 01712345678 or 1712345678).
-    return mobileNumber.value.replace(/\D/g, '')
-}
+const buildIdentifier = () => mobileNumber.value.replace(/\D/g, '')
 
 const handleOtpInput = (idx, event) => {
     const val = event.target.value.replace(/\D/g, '')
     if (val.length) {
         otpDigits.value[idx] = val.slice(0, 1)
         if (idx < 5) nextTick(() => otpInputs.value[idx + 1]?.focus())
+    } else {
+        otpDigits.value[idx] = ''
     }
-    fullOtp.value = otpDigits.value.join('')
 }
 
 const handleOtpBackspace = (idx) => {
@@ -134,13 +155,12 @@ const requestOtp = async () => {
             identifier,
         })
         otpRequested.value = true
-        successMessage.value = 'OTP sent to your mobile number'
+        successMessage.value = 'Verification code sent to your mobile number'
         startCooldown()
-        // Focus first OTP input
         await nextTick()
         if (otpInputs.value[0]) otpInputs.value[0].focus()
     } catch (err) {
-        errorMessage.value = err.response?.data?.message || 'Failed to send OTP. Try again.'
+        errorMessage.value = err.response?.data?.message || 'Failed to send OTP. Please try again.'
     } finally {
         loading.value = false
     }
@@ -161,11 +181,9 @@ const verifyOtp = async () => {
         const response = await api.post('auth/login/verify-otp', {
             mobile: identifier,
             identifier,
-            otp: otp,
+            otp,
         })
-        // Login successful – store token and user
-        await authStore.login(response.data) // expects { token, user }
-        // Redirect to intended page or home
+        await authStore.login(response.data)
         const redirect = route.query.redirect || '/'
         router.push(redirect)
     } catch (err) {
@@ -186,194 +204,307 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap');
+
+/* CSS Variables for light/dark mode */
 .login-page {
-    min-height: calc(100vh - 200px);
+    --bg-page: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --text-primary: #1A2A3A;
+    --text-secondary: #5A6A7A;
+    --text-muted: #7A8A9A;
+    --border-light: #E8ECF0;
+    --border-input: #CCD4DC;
+    --accent: #0066FF;
+    --accent-soft: #F0F7FF;
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+.login-page.dark {
+    --bg-page: #0F1218;
+    --bg-card: #1A1E26;
+    --text-primary: #E8EDF2;
+    --text-secondary: #9AA8B8;
+    --text-muted: #6B7A8A;
+    --border-light: #2A2F3A;
+    --border-input: #3A4050;
+    --accent: #3B82F6;
+    --accent-soft: #1E2A3A;
+    --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.login-page {
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 2rem 1rem;
+    background: var(--bg-page);
+    font-family: 'Plus Jakarta Sans', sans-serif;
 }
 
 .login-card {
-    background: var(--card);
-    border-radius: 1.5rem;
-    padding: 2rem;
+    max-width: 480px;
     width: 100%;
-    max-width: 450px;
-    box-shadow: var(--shadow-lg);
+    background: var(--bg-card);
+    border-radius: 28px;
+    padding: 2rem;
+    box-shadow: var(--shadow-card);
+    border: 1px solid var(--border-light);
 }
 
-.login-header {
-    text-align: center;
-    margin-bottom: 2rem;
-}
-
-.login-header h2 {
-    font-size: 1.8rem;
+.brand-mark {
+    font-family: 'Sora', sans-serif;
     font-weight: 700;
-    color: var(--text);
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    display: inline-block;
+    margin-bottom: 0.75rem;
 }
 
-.login-header p {
-    color: var(--text-muted);
+.badge-label {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.25rem 0.8rem;
+    border-radius: 30px;
+    margin-bottom: 0.5rem;
 }
 
-.input-group {
+.card-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    color: var(--text-primary);
+}
+
+.card-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
     margin-bottom: 1.5rem;
 }
 
-.input-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: var(--text);
+/* Form fields */
+.field-group {
+    margin-bottom: 1.25rem;
 }
 
-.phone-input {
+.field-group label {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-bottom: 0.3rem;
+}
+
+.input-wrapper {
+    position: relative;
     display: flex;
-    gap: 0.5rem;
+    align-items: center;
+}
+
+.input-icon {
+    position: absolute;
+    left: 1rem;
+    font-size: 1rem;
+    color: var(--text-muted);
+    pointer-events: none;
+}
+
+.input-wrapper input,
+.country-code {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    background: var(--bg-page);
+    border: 1px solid var(--border-input);
+    border-radius: 14px;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    transition: all 0.2s;
+}
+
+.input-wrapper input:focus,
+.country-code:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+}
+
+/* Phone row */
+.phone-row {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.country-select {
+    flex: 0 0 110px;
+}
+
+.mobile-input {
+    flex: 1;
 }
 
 .country-code {
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-    color: var(--text);
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%236B7A8A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    padding-right: 2rem;
 }
 
-.phone-input input {
-    flex: 1;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-    color: var(--text);
-}
-
-.phone-hint {
+.field-hint {
     display: block;
-    margin-top: 0.5rem;
-    font-size: 0.82rem;
-    line-height: 1.4;
+    margin-top: 0.4rem;
+    font-size: 0.7rem;
     color: var(--text-muted);
+    line-height: 1.4;
 }
 
-.phone-input input:focus,
-.country-code:focus,
-.otp-input:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
-}
-
-.otp-container {
+/* OTP inputs */
+.otp-group {
     display: flex;
     justify-content: center;
-    gap: 0.75rem;
+    gap: 0.6rem;
+    margin: 0.5rem 0 1rem;
 }
 
 .otp-input {
     width: 3rem;
     height: 3.5rem;
     text-align: center;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 600;
-    background: var(--bg);
-    border: 1px solid var(--border);
-    border-radius: 0.75rem;
-    color: var(--text);
+    background: var(--bg-page);
+    border: 1px solid var(--border-input);
+    border-radius: 14px;
+    color: var(--text-primary);
 }
 
-.resend-link {
+.otp-input:focus {
+    border-color: var(--accent);
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(0, 102, 255, 0.1);
+}
+
+.resend-text {
     text-align: center;
-    margin-top: 1rem;
-    font-size: 0.85rem;
-    color: var(--text-muted);
+    font-size: 0.8rem;
+    color: var(--text-secondary);
 }
 
 .resend-btn {
     background: none;
     border: none;
-    color: var(--primary);
+    color: var(--accent);
     cursor: pointer;
-    font-weight: 500;
+    font-weight: 600;
+    font-size: 0.8rem;
 }
 
 .resend-btn:disabled {
-    opacity: 0.5;
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
+/* Buttons */
 .btn-primary {
     width: 100%;
-    background: var(--primary);
+    background: var(--accent);
     color: white;
     border: none;
-    padding: 0.8rem;
-    border-radius: 0.75rem;
+    padding: 0.85rem;
+    border-radius: 40px;
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.9rem;
     cursor: pointer;
-    transition: background 0.2s;
+    transition: all 0.2s;
 }
 
 .btn-primary:hover:not(:disabled) {
-    background: var(--primary-hover);
+    background: #0052CC;
+    transform: translateY(-1px);
 }
 
 .btn-primary:disabled {
-    opacity: 0.7;
+    opacity: 0.6;
     cursor: not-allowed;
 }
 
-.register-link {
+.form-footer {
     text-align: center;
-    margin-top: 1.5rem;
-    color: var(--text-muted);
+    margin-top: 1.25rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
 }
 
-.register-link a {
-    color: var(--primary);
+.form-footer a {
+    color: var(--accent);
     text-decoration: none;
+    font-weight: 600;
 }
 
+.form-footer a:hover {
+    text-decoration: underline;
+}
+
+/* Alert messages */
 .alert {
-    padding: 0.75rem;
-    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 14px;
+    font-size: 0.8rem;
     margin-bottom: 1rem;
-    font-size: 0.9rem;
 }
 
 .alert.error {
-    background: rgba(239, 68, 68, 0.15);
-    border-left: 3px solid #ef4444;
-    color: #ef4444;
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border-left: 3px solid #EF4444;
 }
 
 .alert.success {
-    background: rgba(16, 185, 129, 0.15);
-    border-left: 3px solid #10b981;
-    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+    border-left: 3px solid #10B981;
 }
 
-@media (max-width: 480px) {
+/* Responsive */
+@media (max-width: 520px) {
     .login-card {
         padding: 1.5rem;
+    }
+
+    .card-title {
+        font-size: 1.6rem;
+    }
+
+    .phone-row {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .country-select {
+        flex: auto;
+    }
+
+    .otp-group {
+        gap: 0.4rem;
     }
 
     .otp-input {
         width: 2.5rem;
         height: 3rem;
-        font-size: 1.2rem;
-    }
-
-    .phone-input {
-        flex-direction: column;
-    }
-
-    .country-code {
-        width: 100%;
+        font-size: 1.1rem;
     }
 }
 </style>

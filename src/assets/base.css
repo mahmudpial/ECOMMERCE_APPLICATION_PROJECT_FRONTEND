@@ -1,85 +1,157 @@
-/* color palette */
+/* ============================================================
+   MINIMAL BASE — Japanese Minimalism + Electric Blue
+   Shared resets, variables, and utilities
+   ============================================================ */
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@400;500;600;700&display=swap');
+
+/* ----- CSS Variables (light mode default) ----- */
 :root {
-  --vt-c-white: #ffffff;
-  --vt-c-white-soft: #f8f8f8;
-  --vt-c-white-mute: #f2f2f2;
+    /* Backgrounds */
+    --bg-page: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --bg-card-soft: #F8FAFC;
 
-  --vt-c-black: #181818;
-  --vt-c-black-soft: #222222;
-  --vt-c-black-mute: #282828;
+    /* Text colors */
+    --text-primary: #1A2A3A;
+    --text-secondary: #5A6A7A;
+    --text-muted: #7A8A9A;
 
-  --vt-c-indigo: #2c3e50;
+    /* Borders & inputs */
+    --border-light: #E8ECF0;
+    --border-input: #CCD4DC;
 
-  --vt-c-divider-light-1: rgba(60, 60, 60, 0.29);
-  --vt-c-divider-light-2: rgba(60, 60, 60, 0.12);
-  --vt-c-divider-dark-1: rgba(84, 84, 84, 0.65);
-  --vt-c-divider-dark-2: rgba(84, 84, 84, 0.48);
+    /* Accent (electric blue) */
+    --accent: #0066FF;
+    --accent-soft: #F0F7FF;
+    --accent-dim: rgba(0, 102, 255, 0.08);
+    --accent-mid: rgba(0, 102, 255, 0.14);
 
-  --vt-c-text-light-1: var(--vt-c-indigo);
-  --vt-c-text-light-2: rgba(60, 60, 60, 0.66);
-  --vt-c-text-dark-1: var(--vt-c-white);
-  --vt-c-text-dark-2: rgba(235, 235, 235, 0.64);
+    /* Status */
+    --success: #10B981;
+    --success-soft: rgba(16, 185, 129, 0.1);
+    --danger: #EF4444;
+    --danger-soft: rgba(239, 68, 68, 0.1);
+
+    /* Shadows */
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.04);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.06);
+
+    /* Typography */
+    --font-sans: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    --font-brand: 'Sora', system-ui, sans-serif;
+
+    /* Transitions */
+    --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-/* semantic color variables for this project */
-:root {
-  --color-background: var(--vt-c-white);
-  --color-background-soft: var(--vt-c-white-soft);
-  --color-background-mute: var(--vt-c-white-mute);
+/* ----- Dark mode (applied via .dark class on root) ----- */
+.dark {
+    --bg-page: #0F1218;
+    --bg-card: #1A1E26;
+    --bg-card-soft: #2A2F3A;
 
-  --color-border: var(--vt-c-divider-light-2);
-  --color-border-hover: var(--vt-c-divider-light-1);
+    --text-primary: #E8EDF2;
+    --text-secondary: #9AA8B8;
+    --text-muted: #6B7A8A;
 
-  --color-heading: var(--vt-c-text-light-1);
-  --color-text: var(--vt-c-text-light-1);
+    --border-light: #2A2F3A;
+    --border-input: #3A4050;
 
-  --section-gap: 160px;
+    --accent: #3B82F6;
+    --accent-soft: #1E2A3A;
+    --accent-dim: rgba(59, 130, 246, 0.08);
+    --accent-mid: rgba(59, 130, 246, 0.14);
+
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.4);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: var(--vt-c-black);
-    --color-background-soft: var(--vt-c-black-soft);
-    --color-background-mute: var(--vt-c-black-mute);
-
-    --color-border: var(--vt-c-divider-dark-2);
-    --color-border-hover: var(--vt-c-divider-dark-1);
-
-    --color-heading: var(--vt-c-text-dark-1);
-    --color-text: var(--vt-c-text-dark-2);
-  }
-}
-
+/* ----- Reset & base ----- */
 *,
 *::before,
 *::after {
-  box-sizing: border-box;
-  margin: 0;
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 16px;
+    scroll-behavior: smooth;
 }
 
 body {
-  min-height: 100vh;
-  color: var(--color-text);
-  background: var(--color-background);
-  transition:
-    color 0.5s,
-    background-color 0.5s;
-  line-height: 1.6;
-  font-family:
-    Inter,
-    -apple-system,
-    BlinkMacSystemFont,
-    'Segoe UI',
-    Roboto,
-    Oxygen,
-    Ubuntu,
-    Cantarell,
-    'Fira Sans',
-    'Droid Sans',
-    'Helvetica Neue',
-    sans-serif;
-  font-size: 15px;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-family: var(--font-sans);
+    background: var(--bg-page);
+    color: var(--text-primary);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* ----- Typography helpers ----- */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+    font-family: var(--font-brand);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+}
+
+/* ----- Links ----- */
+a {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+/* ----- Form elements ----- */
+input,
+button,
+textarea,
+select {
+    font-family: var(--font-sans);
+}
+
+/* ----- Image handling ----- */
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+/* ----- Container utility (used across pages) ----- */
+.container {
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+@media (max-width: 768px) {
+    .container {
+        padding: 0 1rem;
+    }
+}
+
+/* ----- Simple utility classes (optional) ----- */
+.text-muted {
+    color: var(--text-muted);
+}
+
+.text-accent {
+    color: var(--accent);
+}
+
+.bg-card {
+    background: var(--bg-card);
+}
+
+.border-light {
+    border-color: var(--border-light);
 }

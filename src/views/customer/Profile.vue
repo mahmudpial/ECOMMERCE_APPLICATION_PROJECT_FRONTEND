@@ -1,218 +1,200 @@
 <template>
-    <div class="profile-page">
-        <section class="profile-hero">
-            <div class="hero-card">
-                <div class="avatar">{{ avatarInitial }}</div>
-                <div class="hero-copy">
-                    <span class="eyebrow">My profile</span>
-                    <h1>{{ form.fullName || userName }}</h1>
-                    <p>
-                        Keep your personal and delivery details updated so checkout stays fast and accurate.
-                    </p>
+    <div class="profile-page" :class="{ dark: isDark }">
+        <div class="page-container">
 
-                    <div class="hero-tags">
-                        <span><i class="fas fa-user"></i> {{ memberSince }}</span>
-                        <span><i class="fas fa-lock"></i> Secure account</span>
-                        <span><i class="fas fa-truck-fast"></i> Faster checkout</span>
+            <!-- Hero section -->
+            <div class="profile-hero">
+                <div class="hero-card">
+                    <div class="avatar">{{ avatarInitial }}</div>
+                    <div class="hero-content">
+                        <span class="badge-label">My profile</span>
+                        <h1>{{ form.fullName || userName }}</h1>
+                        <p>Keep your personal and delivery details updated for a faster checkout.</p>
+                        <div class="hero-tags">
+                            <span>🕒 {{ memberSince }}</span>
+                            <span>🔒 Secure account</span>
+                            <span>🚚 Faster checkout</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="stats-grid">
+                    <div class="stat-card"><span>Orders</span><strong>{{ stats.totalOrders }}</strong></div>
+                    <div class="stat-card"><span>Spent</span><strong>৳{{ formatMoney(stats.totalSpent) }}</strong></div>
+                    <div class="stat-card"><span>Completion</span><strong>{{ stats.completion }}%</strong></div>
+                    <div class="stat-card accent"><span>Last order</span><strong>{{ stats.lastOrderLabel }}</strong>
                     </div>
                 </div>
             </div>
 
-            <div class="hero-stats">
-                <article class="stat-card">
-                    <span>Orders</span>
-                    <strong>{{ stats.totalOrders }}</strong>
-                </article>
-                <article class="stat-card">
-                    <span>Spent</span>
-                    <strong>৳{{ formatMoney(stats.totalSpent) }}</strong>
-                </article>
-                <article class="stat-card">
-                    <span>Completion</span>
-                    <strong>{{ stats.completion }}%</strong>
-                </article>
-                <article class="stat-card accent">
-                    <span>Last order</span>
-                    <strong>{{ stats.lastOrderLabel }}</strong>
-                </article>
-            </div>
-        </section>
+            <!-- Main content grid -->
+            <div class="profile-grid">
+                <form class="profile-card" @submit.prevent="saveProfile">
+                    <div class="card-header">
+                        <div>
+                            <span class="header-label">Account settings</span>
+                            <h2>Edit your profile</h2>
+                        </div>
+                        <span class="sync-badge">Backend synced</span>
+                    </div>
 
-        <section class="profile-grid">
-            <form class="profile-card" @submit.prevent="saveProfile">
-                <div class="section-head">
+                    <div class="field-grid two-up">
+                        <label class="field full-width">
+                            <span>Full name</span>
+                            <input v-model="form.fullName" type="text" placeholder="John Doe" required />
+                        </label>
+                        <label class="field">
+                            <span>Mobile number</span>
+                            <input v-model="form.mobile" type="tel" inputmode="numeric" placeholder="01712345678"
+                                required />
+                        </label>
+                        <label class="field">
+                            <span>Email address</span>
+                            <input v-model="form.email" type="email" placeholder="you@example.com" />
+                        </label>
+                        <label class="field full-width">
+                            <span>Address line 1</span>
+                            <input v-model="form.addressLine1" type="text" placeholder="House, road, apartment" />
+                        </label>
+                        <label class="field full-width">
+                            <span>Address line 2</span>
+                            <input v-model="form.addressLine2" type="text" placeholder="Area or landmark" />
+                        </label>
+                        <label class="field">
+                            <span>City</span>
+                            <input v-model="form.city" type="text" placeholder="Dhaka" />
+                        </label>
+                        <label class="field">
+                            <span>State / Division</span>
+                            <input v-model="form.state" type="text" placeholder="Dhaka Division" />
+                        </label>
+                        <label class="field">
+                            <span>Post code</span>
+                            <input v-model="form.postcode" type="text" placeholder="1205" />
+                        </label>
+                        <label class="field">
+                            <span>Country</span>
+                            <select v-model="form.country">
+                                <option>Bangladesh</option>
+                                <option>India</option>
+                                <option>United States</option>
+                                <option>United Kingdom</option>
+                            </select>
+                        </label>
+                    </div>
+
+                    <div class="preferences">
+                        <label class="toggle-item">
+                            <input v-model="form.newsletter" type="checkbox" />
+                            <div>
+                                <strong>Newsletter updates</strong>
+                                <small>Receive offers, new arrivals, and sale alerts.</small>
+                            </div>
+                        </label>
+                        <label class="toggle-item">
+                            <input v-model="form.smsUpdates" type="checkbox" />
+                            <div>
+                                <strong>SMS order updates</strong>
+                                <small>Get shipping and delivery updates on your phone.</small>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
+                    <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
+
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" :disabled="saving">
+                            <span v-if="saving">Saving...</span>
+                            <span v-else>Save changes</span>
+                        </button>
+                        <button type="button" class="btn-outline" @click="resetForm">Reset</button>
+                        <button type="button" class="btn-danger" @click="logout">Log out</button>
+                    </div>
+                </form>
+
+                <aside class="sidebar">
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="header-label">Profile health</span>
+                                <h2>Account snapshot</h2>
+                            </div>
+                        </div>
+                        <div class="metrics">
+                            <div class="metric">
+                                <span>Completion</span>
+                                <strong>{{ stats.completion }}%</strong>
+                                <p>Fill in your contact and delivery details.</p>
+                            </div>
+                            <div class="metric">
+                                <span>Saved orders</span>
+                                <strong>{{ stats.totalOrders }}</strong>
+                                <p>Recent order history in this browser.</p>
+                            </div>
+                        </div>
+                        <div class="address-preview">
+                            <strong>Default delivery address</strong>
+                            <p>{{ addressPreview }}</p>
+                        </div>
+                    </div>
+
+                    <div class="info-card">
+                        <div class="card-header">
+                            <div>
+                                <span class="header-label">Quick actions</span>
+                                <h2>Shortcuts</h2>
+                            </div>
+                        </div>
+                        <div class="shortcuts">
+                            <router-link to="/orders" class="shortcut">📦 View orders</router-link>
+                            <router-link to="/products" class="shortcut">🛍️ Continue shopping</router-link>
+                            <router-link to="/cart" class="shortcut">🛒 Open cart</router-link>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+
+            <!-- Recent orders preview -->
+            <section class="recent-section">
+                <div class="section-header">
                     <div>
-                        <span class="panel-kicker">Account settings</span>
-                        <h2>Edit your profile</h2>
+                        <span class="header-label">Recent activity</span>
+                        <h2>Latest orders</h2>
                     </div>
-                    <span class="summary-chip">Backend synced</span>
+                    <router-link to="/orders" class="view-all">View all →</router-link>
                 </div>
 
-                <div class="field-grid two-up">
-                    <label class="field field-wide">
-                        <span>Full name</span>
-                        <input v-model="form.fullName" type="text" placeholder="John Doe" required />
-                    </label>
-                    <label class="field">
-                        <span>Mobile number</span>
-                        <input v-model="form.mobile" type="tel" inputmode="numeric" placeholder="01712345678" required />
-                    </label>
-                    <label class="field">
-                        <span>Email address</span>
-                        <input v-model="form.email" type="email" placeholder="you@example.com" />
-                    </label>
-                    <label class="field field-wide">
-                        <span>Address line 1</span>
-                        <input v-model="form.addressLine1" type="text" placeholder="House, road, apartment" />
-                    </label>
-                    <label class="field field-wide">
-                        <span>Address line 2</span>
-                        <input v-model="form.addressLine2" type="text" placeholder="Area or landmark" />
-                    </label>
-                    <label class="field">
-                        <span>City</span>
-                        <input v-model="form.city" type="text" placeholder="Dhaka" />
-                    </label>
-                    <label class="field">
-                        <span>State / Division</span>
-                        <input v-model="form.state" type="text" placeholder="Dhaka Division" />
-                    </label>
-                    <label class="field">
-                        <span>Post code</span>
-                        <input v-model="form.postcode" type="text" placeholder="1205" />
-                    </label>
-                    <label class="field">
-                        <span>Country</span>
-                        <select v-model="form.country">
-                            <option>Bangladesh</option>
-                            <option>India</option>
-                            <option>United States</option>
-                            <option>United Kingdom</option>
-                        </select>
-                    </label>
-                </div>
-
-                <div class="preferences">
-                    <label class="toggle-row">
-                        <input v-model="form.newsletter" type="checkbox" />
-                        <span>
-                            <strong>Newsletter updates</strong>
-                            <small>Receive offers, new arrivals, and sale alerts.</small>
-                        </span>
-                    </label>
-                    <label class="toggle-row">
-                        <input v-model="form.smsUpdates" type="checkbox" />
-                        <span>
-                            <strong>SMS order updates</strong>
-                            <small>Get shipping and delivery updates on your phone.</small>
-                        </span>
-                    </label>
-                </div>
-
-                <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
-                <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
-
-                <div class="form-actions">
-                    <button type="submit" class="primary-btn" :disabled="saving">
-                        <i v-if="saving" class="fas fa-spinner fa-spin"></i>
-                        <span v-else>Save changes</span>
-                    </button>
-                    <button type="button" class="secondary-btn" @click="resetForm">Reset</button>
-                    <button type="button" class="danger-btn" @click="logout">Log out</button>
-                </div>
-            </form>
-
-            <aside class="sidebar-stack">
-                <div class="info-card">
-                    <div class="section-head">
-                        <div>
-                            <span class="panel-kicker">Profile health</span>
-                            <h2>Account snapshot</h2>
+                <div v-if="recentOrders.length" class="recent-list">
+                    <div v-for="order in recentOrders" :key="order.id" class="recent-card">
+                        <div class="recent-header">
+                            <div>
+                                <strong>#{{ order.order_number || order.id }}</strong>
+                                <p>{{ formatDate(order.created_at) }} · {{ order.item_count || order.items?.length || 0
+                                }} item(s)</p>
+                            </div>
+                            <span class="status-badge" :class="`status-${getStatusMeta(order.status).tone}`">
+                                {{ getStatusMeta(order.status).label }}
+                            </span>
+                        </div>
+                        <div class="recent-footer">
+                            <span>{{ order.delivery_label }}</span>
+                            <strong>৳{{ formatMoney(order.total) }}</strong>
                         </div>
                     </div>
-
-                    <div class="metric-grid">
-                        <article class="metric-card">
-                            <span>Completion</span>
-                            <strong>{{ stats.completion }}%</strong>
-                            <p>Fill in your contact and delivery details.</p>
-                        </article>
-                        <article class="metric-card">
-                            <span>Saved orders</span>
-                            <strong>{{ stats.totalOrders }}</strong>
-                            <p>Recent order history in this browser.</p>
-                        </article>
-                    </div>
-
-                    <div class="address-preview">
-                        <strong>Default delivery address</strong>
-                        <p>{{ addressPreview }}</p>
-                    </div>
                 </div>
-
-                <div class="info-card">
-                    <div class="section-head">
-                        <div>
-                            <span class="panel-kicker">Quick actions</span>
-                            <h2>Shortcuts</h2>
-                        </div>
-                    </div>
-
-                    <div class="quick-actions">
-                        <router-link to="/orders" class="shortcut">
-                            <i class="fas fa-box"></i>
-                            <span>View orders</span>
-                        </router-link>
-                        <router-link to="/products" class="shortcut">
-                            <i class="fas fa-store"></i>
-                            <span>Continue shopping</span>
-                        </router-link>
-                        <router-link to="/cart" class="shortcut">
-                            <i class="fas fa-cart-shopping"></i>
-                            <span>Open cart</span>
-                        </router-link>
-                    </div>
+                <div v-else class="empty-recent">
+                    <span>📦</span>
+                    <p>No recent orders yet. Your completed purchases will appear here.</p>
                 </div>
-            </aside>
-        </section>
+            </section>
 
-        <section class="orders-preview">
-            <div class="section-head">
-                <div>
-                    <span class="panel-kicker">Recent activity</span>
-                    <h2>Latest orders</h2>
-                </div>
-                <router-link to="/orders" class="view-link">View all</router-link>
-            </div>
-
-            <div v-if="recentOrders.length" class="recent-list">
-                <article v-for="order in recentOrders" :key="order.id" class="recent-card">
-                    <div class="recent-top">
-                        <div>
-                            <strong>#{{ order.order_number || order.id }}</strong>
-                            <p>{{ formatDate(order.created_at) }} · {{ order.item_count || order.items?.length || 0 }} item(s)</p>
-                        </div>
-                        <span class="badge" :class="`tone-${getStatusMeta(order.status).tone}`">
-                            {{ getStatusMeta(order.status).label }}
-                        </span>
-                    </div>
-                    <div class="recent-bottom">
-                        <span>{{ order.delivery_label }}</span>
-                        <strong>৳{{ formatMoney(order.total) }}</strong>
-                    </div>
-                </article>
-            </div>
-
-            <div v-else class="recent-empty">
-                <i class="fas fa-box-open"></i>
-                <p>No recent orders yet. Your completed purchases will appear here.</p>
-            </div>
-        </section>
+        </div>
     </div>
 </template>
 
 <script setup>
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '@/utils/axios'
 import { useCustomerAuthStore } from '@/stores/customerAuth'
@@ -228,6 +210,25 @@ import {
 
 const router = useRouter()
 const authStore = useCustomerAuthStore()
+
+// Dark mode detection
+const isDark = ref(false)
+const checkDarkMode = () => {
+    isDark.value = document.documentElement.classList.contains('dark') ||
+        (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches)
+}
+const updateDarkMode = () => { checkDarkMode() }
+const darkModeMedia = window.matchMedia('(prefers-color-scheme: dark)')
+darkModeMedia.addEventListener('change', updateDarkMode)
+onMounted(() => {
+    checkDarkMode()
+    const observer = new MutationObserver(checkDarkMode)
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    onUnmounted(() => observer.disconnect())
+})
+onUnmounted(() => {
+    darkModeMedia.removeEventListener('change', updateDarkMode)
+})
 
 const saving = ref(false)
 const loading = ref(false)
@@ -249,82 +250,43 @@ const form = reactive({
 })
 
 const user = computed(() => authStore.user || {})
-
 const orders = ref([])
 const recentOrders = computed(() => orders.value.slice(0, 3))
 
 const userName = computed(() => user.value?.name || 'Customer account')
 const avatarInitial = computed(() => (form.fullName || userName.value || 'C').charAt(0).toUpperCase())
 const memberSince = computed(() => {
-    const value = user.value?.created_at || readCustomerProfile()?.created_at || new Date().toISOString()
-    return `Member since ${formatDate(value)}`
+    const created = user.value?.created_at || readCustomerProfile()?.created_at || new Date().toISOString()
+    return `Member since ${formatDate(created)}`
 })
 
 const addressPreview = computed(() => {
-    const parts = [
-        form.addressLine1,
-        form.addressLine2,
-        form.city,
-        form.state,
-        form.postcode,
-        form.country,
-    ].filter(Boolean)
-
+    const parts = [form.addressLine1, form.addressLine2, form.city, form.state, form.postcode, form.country].filter(Boolean)
     return parts.length ? parts.join(', ') : 'No default address saved yet.'
 })
 
 const stats = computed(() => {
     const totalOrders = orders.value.length
-    const totalSpent = orders.value.reduce((sum, order) => sum + Number(order.total || 0), 0)
+    const totalSpent = orders.value.reduce((sum, o) => sum + Number(o.total || 0), 0)
     const completion = Math.round(
-        ([
-            form.fullName,
-            form.mobile,
-            form.email,
-            form.addressLine1,
-            form.city,
-            form.postcode,
-        ].filter(Boolean).length /
-            6) *
-            100,
+        ([form.fullName, form.mobile, form.email, form.addressLine1, form.city, form.postcode].filter(Boolean).length / 6) * 100
     )
     const lastOrderLabel = recentOrders.value[0] ? formatDate(recentOrders.value[0].created_at) : 'No orders'
-
-    return {
-        totalOrders,
-        totalSpent,
-        completion,
-        lastOrderLabel,
-    }
+    return { totalOrders, totalSpent, completion, lastOrderLabel }
 })
 
 const hydrateProfile = async () => {
     authStore.loadUser?.()
     const stored = readCustomerProfile() || {}
     const source = authStore.user || {}
-
     loading.value = true
     errorMessage.value = ''
-
     try {
-        const [profileResult, ordersResult] = await Promise.allSettled([
-            api.get('profile'),
-            api.get('orders'),
-        ])
-
-        if (ordersResult.status === 'fulfilled') {
-            orders.value = normalizeOrdersList(ordersResult.value.data)
-        } else {
-            console.error('Orders load error:', ordersResult.reason)
-            orders.value = []
-        }
-
-        if (profileResult.status !== 'fulfilled') {
-            throw profileResult.reason
-        }
-
+        const [profileResult, ordersResult] = await Promise.allSettled([api.get('profile'), api.get('orders')])
+        if (ordersResult.status === 'fulfilled') orders.value = normalizeOrdersList(ordersResult.value.data)
+        else orders.value = []
+        if (profileResult.status !== 'fulfilled') throw profileResult.reason
         const profile = profileResult.value.data.user || profileResult.value.data.data || profileResult.value.data
-
         Object.assign(form, {
             fullName: stored.fullName || profile.name || source.name || '',
             mobile: stored.mobile || normalizePhone(profile.mobile || source.mobile || source.phone || ''),
@@ -338,13 +300,11 @@ const hydrateProfile = async () => {
             newsletter: typeof stored.newsletter === 'boolean' ? stored.newsletter : true,
             smsUpdates: typeof stored.smsUpdates === 'boolean' ? stored.smsUpdates : true,
         })
-
         authStore.user = profile
         localStorage.setItem('customer_user', JSON.stringify(profile))
     } catch (error) {
         console.error('Profile load error:', error)
         errorMessage.value = error.response?.data?.message || 'Unable to load your profile right now.'
-
         Object.assign(form, {
             fullName: stored.fullName || source.name || '',
             mobile: stored.mobile || normalizePhone(source.mobile || source.phone || ''),
@@ -363,46 +323,30 @@ const hydrateProfile = async () => {
     }
 }
 
-const resetForm = () => {
-    hydrateProfile()
-}
+const resetForm = () => { hydrateProfile() }
 
 const saveProfile = async () => {
     errorMessage.value = ''
     successMessage.value = ''
     saving.value = true
-
     try {
-        const address = [
-            form.addressLine1,
-            form.addressLine2,
-            form.city,
-            form.state,
-            form.postcode,
-            form.country,
-        ]
-            .map((part) => String(part || '').trim())
-            .filter(Boolean)
-            .join(', ')
-
+        const address = [form.addressLine1, form.addressLine2, form.city, form.state, form.postcode, form.country]
+            .map(p => String(p || '').trim()).filter(Boolean).join(', ')
         const response = await api.put('profile', {
             name: form.fullName.trim(),
             mobile: normalizePhone(form.mobile),
             email: form.email.trim(),
             address,
         })
-
         const updatedUser = response.data.user || response.data.data || response.data
         authStore.user = updatedUser
         localStorage.setItem('customer_user', JSON.stringify(updatedUser))
-
         saveCustomerProfile({
             ...form,
             address,
             created_at: readCustomerProfile()?.created_at || updatedUser.created_at || new Date().toISOString(),
             updated_at: new Date().toISOString(),
         })
-
         successMessage.value = 'Profile saved successfully.'
     } catch (error) {
         console.error('Profile save error:', error)
@@ -423,545 +367,568 @@ onMounted(() => {
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap');
+
+/* CSS Variables for light/dark mode */
 .profile-page {
-    max-width: 1440px;
-    margin: 0 auto;
-    padding: 0 1rem 2rem;
+    --bg-page: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --text-primary: #1A2A3A;
+    --text-secondary: #5A6A7A;
+    --text-muted: #7A8A9A;
+    --border-light: #E8ECF0;
+    --border-input: #CCD4DC;
+    --accent: #0066FF;
+    --accent-soft: #F0F7FF;
+    --stat-bg: #FFFFFF;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.04);
 }
 
+.profile-page.dark {
+    --bg-page: #0F1218;
+    --bg-card: #1A1E26;
+    --text-primary: #E8EDF2;
+    --text-secondary: #9AA8B8;
+    --text-muted: #6B7A8A;
+    --border-light: #2A2F3A;
+    --border-input: #3A4050;
+    --accent: #3B82F6;
+    --accent-soft: #1E2A3A;
+    --stat-bg: #2A2F3A;
+    --shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    --shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.profile-page {
+    background: var(--bg-page);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-primary);
+    min-height: 100vh;
+}
+
+.page-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 2rem 4rem;
+}
+
+/* Hero */
 .profile-hero {
     display: grid;
-    grid-template-columns: minmax(0, 1.3fr) minmax(320px, 0.85fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.hero-card,
-.profile-card,
-.info-card,
-.recent-card,
-.recent-empty {
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
+    grid-template-columns: 1fr 360px;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .hero-card {
+    background: var(--bg-card);
+    border-radius: 24px;
+    padding: 1.5rem;
     display: flex;
-    gap: 1rem;
+    gap: 1.5rem;
     align-items: center;
-    padding: 1.4rem;
-    border-radius: 1.75rem;
-    background:
-        radial-gradient(circle at top right, rgba(59, 130, 246, 0.16), transparent 28%),
-        radial-gradient(circle at bottom left, rgba(16, 185, 129, 0.12), transparent 30%),
-        var(--card);
+    border: 1px solid var(--border-light);
 }
 
 .avatar {
     width: 88px;
     height: 88px;
-    flex: 0 0 auto;
-    display: grid;
-    place-items: center;
-    border-radius: 1.4rem;
-    background: linear-gradient(135deg, var(--primary), #0ea5e9);
-    color: white;
-    font-size: 2rem;
-    font-weight: 800;
-    box-shadow: 0 16px 34px rgba(59, 130, 246, 0.28);
-}
-
-.hero-copy h1 {
-    margin: 0.85rem 0 0.5rem;
-    font-size: clamp(2rem, 3.4vw, 3.4rem);
-    letter-spacing: -0.04em;
-    line-height: 1.02;
-}
-
-.hero-copy p {
-    margin: 0;
-    color: var(--text-muted);
-    line-height: 1.7;
-    max-width: 58ch;
-}
-
-.eyebrow,
-.panel-kicker {
-    display: inline-flex;
+    background: var(--accent);
+    border-radius: 50%;
+    display: flex;
     align-items: center;
-    gap: 0.45rem;
-    padding: 0.45rem 0.8rem;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
-    font-size: 0.78rem;
-    font-weight: 800;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.hero-content {
+    flex: 1;
+}
+
+.badge-label {
+    display: inline-block;
+    font-size: 0.7rem;
+    font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.08em;
+    background: var(--accent-soft);
+    color: var(--accent);
+    padding: 0.25rem 0.8rem;
+    border-radius: 30px;
+    margin-bottom: 0.5rem;
+}
+
+.hero-content h1 {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.8rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+}
+
+.hero-content p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
 }
 
 .hero-tags {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
+    gap: 0.8rem;
     margin-top: 1rem;
 }
 
 .hero-tags span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    padding: 0.6rem 0.85rem;
-    border-radius: 999px;
-    background: rgba(255, 255, 255, 0.7);
-    border: 1px solid var(--border);
-    color: var(--text);
-    box-shadow: var(--shadow);
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    background: var(--bg-page);
+    padding: 0.3rem 0.8rem;
+    border-radius: 30px;
+    border: 1px solid var(--border-light);
 }
 
-.hero-stats {
+.stats-grid {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.8rem;
 }
 
 .stat-card {
+    background: var(--stat-bg);
+    border-radius: 16px;
     padding: 1rem;
-    border-radius: 1.25rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow);
+    border: 1px solid var(--border-light);
 }
 
 .stat-card span {
-    display: block;
-    margin-bottom: 0.35rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
     color: var(--text-muted);
-    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 0.3rem;
 }
 
 .stat-card strong {
-    font-size: 1.4rem;
-    color: var(--text);
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--text-primary);
 }
 
 .stat-card.accent {
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.12), rgba(16, 185, 129, 0.12));
+    background: var(--accent-soft);
 }
 
+.stat-card.accent strong {
+    color: var(--accent);
+}
+
+/* Profile grid */
 .profile-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.8fr);
-    gap: 1rem;
-    margin-bottom: 1rem;
-}
-
-.profile-card,
-.info-card,
-.recent-card,
-.recent-empty {
-    border-radius: 1.5rem;
+    grid-template-columns: 1fr 320px;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
 }
 
 .profile-card {
-    padding: 1.25rem;
+    background: var(--bg-card);
+    border-radius: 24px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
 }
 
-.section-head {
+.card-header {
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
 }
 
-.section-head h2 {
-    margin: 0.1rem 0 0;
+.header-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    background: var(--accent-soft);
+    padding: 0.25rem 0.8rem;
+    border-radius: 30px;
+}
+
+.card-header h2 {
+    font-family: 'Sora', sans-serif;
     font-size: 1.2rem;
+    font-weight: 600;
+    margin: 0.25rem 0 0;
 }
 
-.summary-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.75rem;
-    border-radius: 999px;
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
-    font-size: 0.82rem;
-    font-weight: 800;
-    white-space: nowrap;
+.sync-badge {
+    font-size: 0.7rem;
+    background: var(--bg-page);
+    padding: 0.25rem 0.7rem;
+    border-radius: 30px;
+    color: var(--text-secondary);
 }
 
 .field-grid {
     display: grid;
-    gap: 0.9rem;
+    gap: 1rem;
 }
 
 .field-grid.two-up {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(2, 1fr);
 }
 
 .field {
-    display: grid;
-    gap: 0.45rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.field.full-width {
+    grid-column: span 2;
 }
 
 .field span {
-    font-size: 0.92rem;
+    font-size: 0.75rem;
     font-weight: 600;
-    color: var(--text);
+    color: var(--text-secondary);
 }
 
 .field input,
 .field select {
-    width: 100%;
-    border: 1.5px solid var(--border);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.75);
-    padding: 0.95rem 1rem;
-    color: var(--text);
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-input);
+    border-radius: 12px;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    transition: all 0.2s;
 }
 
 .field input:focus,
 .field select:focus {
     outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
-}
-
-.field-wide {
-    grid-column: 1 / -1;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
 }
 
 .preferences {
-    display: grid;
-    gap: 0.85rem;
-    margin: 1.2rem 0;
-}
-
-.toggle-row {
+    margin: 1.5rem 0;
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.toggle-item {
+    display: flex;
     gap: 0.8rem;
-    padding: 0.95rem 1rem;
-    border-radius: 1rem;
-    background: rgba(59, 130, 246, 0.05);
-    border: 1px solid var(--border);
+    align-items: flex-start;
+    padding: 0.8rem;
+    border-radius: 16px;
+    background: var(--bg-page);
+    border: 1px solid var(--border-light);
+    cursor: pointer;
 }
 
-.toggle-row input {
+.toggle-item input {
     margin-top: 0.2rem;
+    accent-color: var(--accent);
 }
 
-.toggle-row strong {
+.toggle-item strong {
     display: block;
+    font-size: 0.85rem;
     margin-bottom: 0.2rem;
 }
 
-.toggle-row small {
+.toggle-item small {
+    font-size: 0.7rem;
     color: var(--text-muted);
-    line-height: 1.45;
 }
 
 .alert {
-    padding: 0.85rem 1rem;
-    border-radius: 1rem;
-    margin-bottom: 0.8rem;
+    padding: 0.8rem 1rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    margin-bottom: 1rem;
 }
 
 .alert.error {
-    background: rgba(239, 68, 68, 0.12);
-    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border-left: 3px solid #EF4444;
 }
 
 .alert.success {
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
+    background: rgba(16, 185, 129, 0.1);
+    color: #10B981;
+    border-left: 3px solid #10B981;
 }
 
 .form-actions {
     display: flex;
+    gap: 0.8rem;
     flex-wrap: wrap;
-    gap: 0.75rem;
 }
 
-.primary-btn,
-.secondary-btn,
-.danger-btn,
-.shortcut {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border-radius: 999px;
-    padding: 0.9rem 1.2rem;
-    font-weight: 700;
-    text-decoration: none;
+.btn-primary,
+.btn-outline,
+.btn-danger {
+    padding: 0.7rem 1.3rem;
+    border-radius: 40px;
+    font-weight: 600;
+    font-size: 0.8rem;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-}
-
-.primary-btn {
+    transition: all 0.2s;
     border: none;
-    background: linear-gradient(135deg, var(--primary), #0ea5e9);
-    color: #fff;
-    box-shadow: 0 16px 34px rgba(59, 130, 246, 0.22);
 }
 
-.secondary-btn,
-.danger-btn {
-    border: 1px solid var(--border);
-    background: var(--card);
-    color: var(--text);
+.btn-primary {
+    background: var(--accent);
+    color: white;
 }
 
-.danger-btn {
-    color: #b91c1c;
-    border-color: rgba(239, 68, 68, 0.22);
-    background: rgba(239, 68, 68, 0.06);
-}
-
-.primary-btn:hover,
-.secondary-btn:hover,
-.danger-btn:hover,
-.shortcut:hover,
-.view-link:hover {
+.btn-primary:hover {
+    background: #0052CC;
     transform: translateY(-1px);
 }
 
-.sidebar-stack {
-    display: grid;
-    gap: 1rem;
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--border-input);
+    color: var(--text-primary);
+}
+
+.btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.btn-danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #EF4444;
+    border: 1px solid #EF4444;
+}
+
+.btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+}
+
+/* Sidebar */
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
 }
 
 .info-card {
-    padding: 1.25rem;
+    background: var(--bg-card);
+    border-radius: 24px;
+    padding: 1.2rem;
+    border: 1px solid var(--border-light);
 }
 
-.metric-grid {
+.metrics {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.85rem;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin: 1rem 0;
 }
 
-.metric-card {
-    padding: 1rem;
-    border-radius: 1.15rem;
-    background: rgba(59, 130, 246, 0.05);
+.metric {
+    background: var(--bg-page);
+    border-radius: 16px;
+    padding: 0.8rem;
 }
 
-.metric-card span {
-    display: block;
-    margin-bottom: 0.35rem;
+.metric span {
+    font-size: 0.7rem;
     color: var(--text-muted);
-    font-size: 0.84rem;
-}
-
-.metric-card strong {
-    display: block;
-    font-size: 1.3rem;
-    margin-bottom: 0.25rem;
-}
-
-.metric-card p {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.88rem;
-    line-height: 1.45;
-}
-
-.address-preview {
-    margin-top: 1rem;
-    padding: 1rem;
-    border-radius: 1.15rem;
-    background: rgba(16, 185, 129, 0.08);
-}
-
-.address-preview strong {
-    display: block;
-    margin-bottom: 0.25rem;
-}
-
-.address-preview p {
-    margin: 0;
-    color: var(--text-muted);
-    line-height: 1.55;
-}
-
-.quick-actions {
-    display: grid;
-    gap: 0.75rem;
-}
-
-.shortcut {
-    justify-content: flex-start;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.72);
-    color: var(--text);
-}
-
-.shortcut i {
-    width: 2.2rem;
-    height: 2.2rem;
-    display: grid;
-    place-items: center;
-    border-radius: 0.85rem;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
-}
-
-.shortcut span {
-    flex: 1;
-    text-align: left;
-}
-
-.orders-preview {
-    padding: 1.25rem;
-    border-radius: 1.5rem;
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
-}
-
-.view-link {
-    color: var(--primary);
-    font-weight: 700;
-    text-decoration: none;
-}
-
-.recent-list {
-    display: grid;
-    gap: 0.85rem;
-}
-
-.recent-card {
-    padding: 1rem;
-    border-radius: 1.15rem;
-    background: rgba(59, 130, 246, 0.05);
-}
-
-.recent-top,
-.recent-bottom {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-.recent-top strong {
     display: block;
     margin-bottom: 0.2rem;
 }
 
-.recent-top p,
-.recent-bottom span {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.88rem;
+.metric strong {
+    font-size: 1.3rem;
+    font-weight: 700;
+    display: block;
+    margin-bottom: 0.2rem;
 }
 
-.badge {
-    display: inline-flex;
+.metric p {
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.address-preview {
+    background: var(--accent-soft);
+    border-radius: 16px;
+    padding: 0.8rem;
+    margin-top: 0.5rem;
+}
+
+.address-preview strong {
+    font-size: 0.8rem;
+    display: block;
+    margin-bottom: 0.2rem;
+}
+
+.address-preview p {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.shortcuts {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.shortcut {
+    display: block;
+    padding: 0.7rem 1rem;
+    background: var(--bg-page);
+    border-radius: 12px;
+    text-decoration: none;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    transition: all 0.2s;
+}
+
+.shortcut:hover {
+    background: var(--accent-soft);
+    color: var(--accent);
+}
+
+/* Recent orders */
+.recent-section {
+    background: var(--bg-card);
+    border-radius: 24px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
     align-items: center;
-    padding: 0.45rem 0.75rem;
-    border-radius: 999px;
-    font-size: 0.82rem;
-    font-weight: 800;
+    margin-bottom: 1.2rem;
 }
 
-.tone-warning {
-    background: rgba(245, 158, 11, 0.12);
-    color: #92400e;
+.view-all {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.8rem;
+    font-weight: 500;
 }
 
-.tone-info {
-    background: rgba(59, 130, 246, 0.12);
-    color: #1d4ed8;
+.recent-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
 }
 
-.tone-primary {
-    background: rgba(14, 165, 233, 0.12);
-    color: #0369a1;
+.recent-card {
+    background: var(--bg-page);
+    border-radius: 16px;
+    padding: 1rem;
+    border: 1px solid var(--border-light);
 }
 
-.tone-accent {
-    background: rgba(20, 184, 166, 0.12);
-    color: #0f766e;
+.recent-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
 }
 
-.tone-success {
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
+.recent-header strong {
+    font-size: 0.9rem;
 }
 
-.tone-danger {
-    background: rgba(239, 68, 68, 0.12);
-    color: #b91c1c;
-}
-
-.recent-empty {
-    display: grid;
-    place-items: center;
-    gap: 0.65rem;
-    min-height: 220px;
-    text-align: center;
-}
-
-.recent-empty i {
-    color: var(--primary);
-    font-size: 1.8rem;
-}
-
-.recent-empty p {
-    max-width: 38ch;
-    margin: 0;
+.recent-header p {
+    font-size: 0.7rem;
     color: var(--text-muted);
-    line-height: 1.55;
+    margin: 0.2rem 0 0;
 }
 
-@media (max-width: 1100px) {
+.status-badge {
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 30px;
+}
+
+.status-badge.status-success {
+    background: #E8F5E9;
+    color: #2E7D32;
+}
+
+.status-badge.status-info {
+    background: #E3F2FD;
+    color: #1565C0;
+}
+
+.status-badge.status-warning {
+    background: #FFF3E0;
+    color: #E65100;
+}
+
+.status-badge.status-danger {
+    background: #FFEBEE;
+    color: #C62828;
+}
+
+.recent-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.empty-recent {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
+}
+
+/* Responsive */
+@media (max-width: 1000px) {
+
     .profile-hero,
     .profile-grid {
         grid-template-columns: 1fr;
     }
+
+    .page-container {
+        padding: 0 1rem 3rem;
+    }
 }
 
-@media (max-width: 760px) {
-    .profile-page {
-        padding: 0 0.75rem 1.5rem;
+@media (max-width: 600px) {
+    .field-grid.two-up {
+        grid-template-columns: 1fr;
     }
 
-    .hero-card,
-    .profile-card,
-    .info-card,
-    .orders-preview,
-    .recent-card,
-    .recent-empty {
-        border-radius: 1.25rem;
+    .field.full-width {
+        grid-column: span 1;
     }
 
     .hero-card {
         flex-direction: column;
-        align-items: flex-start;
+        text-align: center;
     }
 
-    .hero-stats,
-    .field-grid.two-up,
-    .metric-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .section-head {
-        flex-direction: column;
-        align-items: flex-start;
-    }
-
-    .recent-top,
-    .recent-bottom,
-    .form-actions {
-        flex-direction: column;
-        align-items: stretch;
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 </style>

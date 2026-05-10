@@ -1,332 +1,219 @@
 <template>
     <div class="checkout-page">
-        <section class="checkout-hero">
-            <div class="hero-copy">
-                <span class="eyebrow">Secure checkout</span>
-                <h1>Review your order and complete your purchase.</h1>
-                <p>
-                    We keep the flow simple: confirm your delivery details, choose how you want to pay,
-                    and place your order in one smooth step.
-                </p>
 
-                <div class="hero-pills">
-                    <span><i class="fas fa-shield-heart"></i> Encrypted checkout</span>
-                    <span><i class="fas fa-truck-fast"></i> Fast delivery options</span>
-                    <span><i class="fas fa-box-open"></i> Live order summary</span>
-                </div>
-            </div>
-
-            <aside class="hero-summary">
-                <div class="hero-summary-card">
-                    <div class="summary-row">
-                        <span>Items</span>
-                        <strong>{{ totalItems }}</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Subtotal</span>
-                        <strong>৳{{ formatMoney(subtotal) }}</strong>
-                    </div>
-                    <div class="summary-row">
-                        <span>Shipping</span>
-                        <strong>{{ shippingFee === 0 ? 'Free' : `৳${formatMoney(shippingFee)}` }}</strong>
-                    </div>
-                    <div class="summary-divider"></div>
-                    <div class="summary-row total">
-                        <span>Total</span>
-                        <strong>৳{{ formatMoney(total) }}</strong>
-                    </div>
-                </div>
-            </aside>
-        </section>
-
-        <div v-if="!cartItems.length" class="empty-state">
-            <div class="empty-card">
-                <div class="empty-icon">
-                    <i class="fas fa-cart-shopping"></i>
-                </div>
-                <h2>Your cart is empty</h2>
-                <p>Add a few products to unlock checkout and order placement.</p>
-                <router-link to="/products" class="btn-primary">Browse products</router-link>
+        <!-- Hero section -->
+        <div class="page-header">
+            <div class="brand-mark">Commercia</div>
+            <h1 class="page-title">Secure checkout</h1>
+            <p class="page-sub">Complete your order with just a few details.</p>
+            <div class="trust-badges">
+                <span>🔒 Encrypted</span>
+                <span>🚚 Fast delivery</span>
+                <span>📦 Live summary</span>
             </div>
         </div>
 
-        <div v-else class="checkout-grid">
+        <!-- Empty cart state -->
+        <div v-if="!cartItems.length" class="empty-state">
+            <div class="empty-icon">—</div>
+            <h2>Your cart is empty</h2>
+            <p>Add some pieces before placing an order.</p>
+            <router-link to="/products" class="btn-primary">Browse collection</router-link>
+        </div>
+
+        <!-- Checkout layout -->
+        <div v-else class="checkout-layout">
             <form class="checkout-form" @submit.prevent="placeOrder">
-                <section class="form-card">
-                    <div class="section-header">
-                        <span class="section-kicker">1</span>
-                        <div>
-                            <h2>Contact details</h2>
-                            <p>We will send your order updates to these details.</p>
-                        </div>
-                    </div>
 
-                    <div class="field-grid two-up">
-                        <label class="field">
-                            <span>Full name</span>
-                            <input v-model="form.fullName" type="text" placeholder="John Doe" required />
-                        </label>
-                        <label class="field">
-                            <span>Mobile number</span>
-                            <input v-model="form.mobile" type="tel" inputmode="numeric" placeholder="01712345678" required />
-                        </label>
-                        <label class="field field-wide">
-                            <span>Email address</span>
-                            <input v-model="form.email" type="email" placeholder="you@example.com" />
-                        </label>
-                    </div>
-                </section>
-
-                <section class="form-card">
-                    <div class="section-header">
-                        <span class="section-kicker">2</span>
-                        <div>
-                            <h2>Shipping address</h2>
-                            <p>Enter the address where you want the parcel delivered.</p>
-                        </div>
-                    </div>
-
-                    <div class="field-grid">
-                        <label class="field field-wide">
-                            <span>Address line 1</span>
-                            <input v-model="form.addressLine1" type="text" placeholder="House, road, apartment" required />
-                        </label>
-                        <label class="field field-wide">
-                            <span>Address line 2</span>
-                            <input v-model="form.addressLine2" type="text" placeholder="Area, landmark, floor" />
-                        </label>
-                        <label class="field">
-                            <span>City</span>
-                            <input v-model="form.city" type="text" placeholder="Dhaka" required />
-                        </label>
-                        <label class="field">
-                            <span>State / Division</span>
-                            <input v-model="form.state" type="text" placeholder="Dhaka Division" />
-                        </label>
-                        <label class="field">
-                            <span>Post code</span>
-                            <input v-model="form.postcode" type="text" placeholder="1205" required />
-                        </label>
-                        <label class="field">
-                            <span>Country</span>
-                            <select v-model="form.country">
-                                <option>Bangladesh</option>
-                                <option>India</option>
-                                <option>United States</option>
-                                <option>United Kingdom</option>
-                            </select>
-                        </label>
-                    </div>
-                </section>
-
-                <section class="form-card">
-                    <div class="section-header">
-                        <span class="section-kicker">3</span>
-                        <div>
-                            <h2>Delivery method</h2>
-                            <p>Choose a delivery speed that works for you.</p>
-                        </div>
-                    </div>
-
-                    <div class="choice-grid">
-                        <button
-                            v-for="option in deliveryOptions"
-                            :key="option.value"
-                            type="button"
-                            class="choice-card"
-                            :class="{ active: form.deliveryMethod === option.value }"
-                            @click="form.deliveryMethod = option.value"
-                        >
-                            <i :class="option.icon"></i>
-                            <div class="choice-copy">
-                                <strong>{{ option.label }}</strong>
-                                <p>{{ option.description }}</p>
+                <!-- Dynamic form sections -->
+                <template v-for="(section, idx) in formSections" :key="idx">
+                    <div class="form-section">
+                        <div class="section-header">
+                            <div class="section-number">{{ idx + 1 }}</div>
+                            <div>
+                                <h2 class="section-title">{{ section.title }}</h2>
+                                <p class="section-subtitle">{{ section.sub }}</p>
                             </div>
-                            <span class="choice-price">{{ option.fee ? `৳${formatMoney(option.fee)}` : 'Free' }}</span>
+                        </div>
+                        <div class="field-grid" :class="section.gridClass">
+                            <label v-for="field in section.fields" :key="field.key"
+                                :class="['field', field.wide ? 'field-wide' : '']">
+                                <span class="field-label">{{ field.label }}</span>
+                                <select v-if="field.type === 'select'" v-model="form[field.key]" class="field-input">
+                                    <option v-for="opt in field.options" :key="opt" :value="opt">{{ opt }}</option>
+                                </select>
+                                <textarea v-else-if="field.type === 'textarea'" v-model="form[field.key]"
+                                    class="field-input" :placeholder="field.placeholder" rows="4"></textarea>
+                                <input v-else v-model="form[field.key]" class="field-input" :type="field.type || 'text'"
+                                    :placeholder="field.placeholder" :required="field.required"
+                                    :inputmode="field.inputmode" />
+                            </label>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Delivery method -->
+                <div class="form-section">
+                    <div class="section-header">
+                        <div class="section-number">3</div>
+                        <div>
+                            <h2 class="section-title">Delivery method</h2>
+                            <p class="section-subtitle">Choose your preferred shipping speed.</p>
+                        </div>
+                    </div>
+                    <div class="option-group">
+                        <button v-for="opt in deliveryOptions" :key="opt.value" type="button" class="option-card"
+                            :class="{ active: form.deliveryMethod === opt.value }"
+                            @click="form.deliveryMethod = opt.value">
+                            <div class="option-icon">📦</div>
+                            <div class="option-info">
+                                <strong>{{ opt.label }}</strong>
+                                <p>{{ opt.description }}</p>
+                            </div>
+                            <span class="option-price">{{ opt.fee ? `৳${formatMoney(opt.fee)}` : 'Free' }}</span>
                         </button>
                     </div>
-
-                    <div v-if="freeShippingLeft > 0" class="shipping-note">
-                        Add ৳{{ formatMoney(freeShippingLeft) }} more for free standard delivery.
+                    <div class="shipping-note" :class="{ 'free-unlocked': freeShippingLeft <= 0 }">
+                        <template v-if="freeShippingLeft > 0">Add ৳{{ formatMoney(freeShippingLeft) }} more for free
+                            standard shipping.</template>
+                        <template v-else>✨ Free standard shipping unlocked for this order.</template>
                     </div>
-                    <div v-else class="shipping-note success">
-                        Free standard shipping is unlocked for this order.
-                    </div>
-                </section>
+                </div>
 
-                <section class="form-card">
+                <!-- Payment method -->
+                <div class="form-section">
                     <div class="section-header">
-                        <span class="section-kicker">4</span>
+                        <div class="section-number">4</div>
                         <div>
-                            <h2>Payment method</h2>
-                            <p>Pick your preferred way to pay.</p>
+                            <h2 class="section-title">Payment method</h2>
+                            <p class="section-subtitle">Your preferred way to pay.</p>
                         </div>
                     </div>
-
-                    <div class="choice-grid payment-grid">
-                        <button
-                            v-for="option in paymentOptions"
-                            :key="option.value"
-                            type="button"
-                            class="choice-card payment-card"
-                            :class="{ active: form.paymentMethod === option.value }"
-                            @click="form.paymentMethod = option.value"
-                        >
-                            <i :class="option.icon"></i>
-                            <div class="choice-copy">
-                                <strong>{{ option.label }}</strong>
-                                <p>{{ option.description }}</p>
+                    <div class="payment-grid">
+                        <button v-for="opt in paymentOptions" :key="opt.value" type="button" class="payment-card"
+                            :class="{ active: form.paymentMethod === opt.value }"
+                            @click="form.paymentMethod = opt.value">
+                            <div class="payment-icon">💳</div>
+                            <div>
+                                <strong>{{ opt.label }}</strong>
+                                <p>{{ opt.description }}</p>
                             </div>
                         </button>
                     </div>
-                </section>
+                </div>
 
-                <section class="form-card">
+                <!-- Promo code -->
+                <div class="form-section">
                     <div class="section-header">
-                        <span class="section-kicker">5</span>
+                        <div class="section-number">5</div>
                         <div>
-                            <h2>Promo code</h2>
-                            <p>Apply a discount code to lower the order total.</p>
+                            <h2 class="section-title">Promo code</h2>
+                            <p class="section-subtitle">Apply a discount code.</p>
                         </div>
                     </div>
-
                     <div class="promo-row">
-                        <label class="field promo-field">
-                            <span>Promo code</span>
-                            <input
-                                v-model="promoCodeInput"
-                                type="text"
-                                placeholder="SAVE10"
-                                autocomplete="off"
-                            />
-                        </label>
-                        <button type="button" class="promo-btn" @click="applyPromoCode">Apply</button>
+                        <div class="promo-input-wrapper">
+                            <span class="promo-icon">🏷️</span>
+                            <input v-model="promoCodeInput" class="field-input" type="text" placeholder="SAVE10"
+                                autocomplete="off" style="text-transform: uppercase;" />
+                        </div>
+                        <button type="button" class="btn-outline" @click="applyPromoCode">Apply</button>
                     </div>
-
-                    <p v-if="promoMessage" class="promo-success">
-                        <i class="fas fa-circle-check"></i>
-                        {{ promoMessage }}
+                    <p v-if="promoMessage" class="promo-message success"><span class="check">✓</span> {{ promoMessage }}
                     </p>
-                    <p v-if="promoError" class="promo-error">
-                        <i class="fas fa-triangle-exclamation"></i>
-                        {{ promoError }}
+                    <p v-if="promoError" class="promo-message error"><span class="exclaim">⚠️</span> {{ promoError }}
                     </p>
-
-                    <div class="promo-suggestions">
-                        <button
-                            v-for="promo in promoCodes"
-                            :key="promo.code"
-                            type="button"
-                            class="promo-chip"
-                            @click="usePromoSuggestion(promo.code)"
-                        >
-                            <strong>{{ promo.code }}</strong>
-                            <span>{{ promo.label }}</span>
+                    <div v-if="promoCodes.length" class="promo-chips">
+                        <button v-for="p in promoCodes" :key="p.code" type="button" class="promo-chip"
+                            @click="usePromoSuggestion(p.code)">
+                            <strong>{{ p.code }}</strong>
+                            <span>{{ p.label }}</span>
                         </button>
                     </div>
+                </div>
 
-                    <div v-if="appliedPromo" class="promo-applied">
-                        <div>
-                            <strong>{{ appliedPromo.code }}</strong>
-                            <p>{{ appliedPromo.description }}</p>
-                        </div>
-                        <button type="button" class="promo-remove-btn" @click="removePromoCode">Remove</button>
-                    </div>
-                </section>
-
-                <section class="form-card">
+                <!-- Delivery note -->
+                <div class="form-section">
                     <div class="section-header">
-                        <span class="section-kicker">6</span>
+                        <div class="section-number">6</div>
                         <div>
-                            <h2>Order note</h2>
-                            <p>Add delivery instructions or a short note for the courier.</p>
+                            <h2 class="section-title">Delivery note</h2>
+                            <p class="section-subtitle">Optional instructions for the courier.</p>
                         </div>
                     </div>
-
                     <label class="field field-wide">
-                        <span>Note for delivery team</span>
-                        <textarea
-                            v-model="form.note"
-                            rows="4"
-                            placeholder="Leave at the gate, call before delivery, etc."
-                        ></textarea>
+                        <span class="field-label">Note</span>
+                        <textarea v-model="form.note" class="field-input"
+                            placeholder="Leave at gate, call before delivery…" rows="3"></textarea>
                     </label>
-                </section>
+                </div>
 
-                <label class="terms-row">
+                <!-- Terms -->
+                <label class="terms-checkbox">
                     <input v-model="form.termsAccepted" type="checkbox" />
-                    <span>I agree to the terms of service and confirm the shipping details are correct.</span>
+                    <span>I confirm my details are correct and agree to the terms of service.</span>
                 </label>
 
+                <!-- Messages -->
                 <div v-if="errorMessage" class="alert error">{{ errorMessage }}</div>
                 <div v-if="successMessage" class="alert success">{{ successMessage }}</div>
 
-                <button type="submit" class="place-order-btn" :disabled="submitting">
-                    <i v-if="submitting" class="fas fa-spinner fa-spin"></i>
+                <!-- Submit -->
+                <button type="submit" class="btn-primary submit-btn" :disabled="submitting">
+                    <span v-if="submitting">Processing…</span>
                     <span v-else>Place order · ৳{{ formatMoney(total) }}</span>
                 </button>
             </form>
 
-            <aside class="summary-panel">
-                <div class="summary-card sticky">
-                    <div class="summary-head">
+            <!-- Order Summary Sidebar -->
+            <aside class="order-summary">
+                <div class="summary-sticky">
+                    <div class="summary-header">
                         <div>
-                            <span class="summary-kicker">Order summary</span>
-                            <h3>{{ totalItems }} item{{ totalItems === 1 ? '' : 's' }}</h3>
+                            <div class="summary-label">Order summary</div>
+                            <h3 class="summary-title">{{ totalItems }} {{ totalItems === 1 ? 'item' : 'items' }}</h3>
                         </div>
-                        <span class="summary-chip">{{ selectedDelivery.label }}</span>
+                        <span class="delivery-badge">{{ selectedDelivery.label }}</span>
                     </div>
 
                     <div class="summary-items">
-                        <article v-for="item in cartItems" :key="item.id" class="summary-item">
+                        <div v-for="item in cartItems" :key="item.id" class="summary-item">
                             <img :src="getProductImage(item)" :alt="item.name" />
-                            <div class="summary-item-copy">
+                            <div class="item-details">
                                 <strong>{{ item.name }}</strong>
                                 <span>Qty {{ item.quantity }} · ৳{{ formatMoney(item.price) }}</span>
                             </div>
-                            <div class="summary-item-total">৳{{ formatMoney(item.price * item.quantity) }}</div>
-                        </article>
+                            <span class="item-total">৳{{ formatMoney(item.price * item.quantity) }}</span>
+                        </div>
                     </div>
 
                     <div class="summary-lines">
-                        <div class="line">
-                            <span>Subtotal</span>
-                            <strong>৳{{ formatMoney(subtotal) }}</strong>
-                        </div>
-                        <div class="line">
-                            <span>Shipping</span>
-                            <strong>{{ shippingFee === 0 ? 'Free' : `৳${formatMoney(shippingFee)}` }}</strong>
-                        </div>
-                        <div class="line">
-                            <span>Discount</span>
-                            <strong>{{ promoDiscount > 0 ? `- ৳${formatMoney(promoDiscount)}` : '৳0.00' }}</strong>
-                        </div>
-                        <div class="line total">
-                            <span>Total</span>
-                            <strong>৳{{ formatMoney(total) }}</strong>
-                        </div>
+                        <div class="summary-line"><span>Subtotal</span><span>৳{{ formatMoney(subtotal) }}</span></div>
+                        <div class="summary-line"><span>Shipping</span><span>{{ shippingFee === 0 ? 'Free' :
+                            `৳${formatMoney(shippingFee)}` }}</span></div>
+                        <div class="summary-line"><span>Discount</span><span>{{ promoDiscount > 0 ?
+                            `−৳${formatMoney(promoDiscount)}` : '—' }}</span></div>
+                        <div class="summary-divider"></div>
+                        <div class="summary-line total"><span>Total</span><span>৳{{ formatMoney(total) }}</span></div>
                     </div>
 
-                    <div class="summary-info">
-                        <div class="info-row">
-                            <i class="fas fa-truck"></i>
-                            <div>
-                                <strong>{{ selectedDelivery.label }}</strong>
+                    <div class="summary-details">
+                        <div class="detail-row">
+                            <div class="detail-icon">🚚</div>
+                            <div><strong>{{ selectedDelivery.label }}</strong>
                                 <p>{{ selectedDelivery.eta }}</p>
                             </div>
                         </div>
-                        <div class="info-row">
-                            <i class="fas fa-credit-card"></i>
-                            <div>
-                                <strong>{{ selectedPayment.label }}</strong>
+                        <div class="detail-row">
+                            <div class="detail-icon">💳</div>
+                            <div><strong>{{ selectedPayment.label }}</strong>
                                 <p>{{ selectedPayment.description }}</p>
                             </div>
                         </div>
-                        <div class="info-row">
-                            <i class="fas fa-shield-heart"></i>
-                            <div>
-                                <strong>Secure payment</strong>
-                                <p>Your data is kept private and encrypted.</p>
+                        <div class="detail-row">
+                            <div class="detail-icon">🔒</div>
+                            <div><strong>Secure & encrypted</strong>
+                                <p>Your data is protected.</p>
                             </div>
                         </div>
                     </div>
@@ -342,21 +229,7 @@ import { useRouter } from 'vue-router'
 import api from '@/utils/axios'
 import { useCartStore } from '@/stores/cart'
 import { useCustomerAuthStore } from '@/stores/customerAuth'
-import {
-    calculatePromoDiscount,
-    deliveryOptions,
-    formatMoney,
-    getDeliveryOption,
-    getPromoCode,
-    getPaymentOption,
-    getProductImage,
-    getShippingFee,
-    normalizePhone,
-    paymentOptions,
-    readCheckoutDraft,
-    saveCheckoutDraft,
-    promoCodes,
-} from '@/utils/customerCommerce'
+import { calculatePromoDiscount, deliveryOptions, formatMoney, getDeliveryOption, getPromoCode, getPaymentOption, getProductImage, getShippingFee, normalizePhone, paymentOptions, readCheckoutDraft, saveCheckoutDraft, promoCodes } from '@/utils/customerCommerce'
 
 const router = useRouter()
 const cartStore = useCartStore()
@@ -397,138 +270,77 @@ const form = reactive({
     paymentMethod: 'cod',
     promoCode: '',
     note: '',
-    termsAccepted: false,
+    termsAccepted: false
 })
 
-const buildShippingAddress = () =>
-    [
-        form.addressLine1,
-        form.addressLine2,
-        form.city,
-        form.state,
-        form.postcode,
-        form.country,
-    ]
-        .map((part) => String(part || '').trim())
-        .filter(Boolean)
-        .join(', ')
-
-const hydrateForm = () => {
-    authStore.loadUser?.()
-    const user = authStore.user || {}
-    const draft = readCheckoutDraft() || {}
-    const saved = {
-        fullName: user.name || '',
-        mobile: normalizePhone(user.mobile || user.phone || ''),
-        email: user.email || '',
-        addressLine1: user.address_line1 || user.address || '',
-        addressLine2: user.address_line2 || '',
-        city: user.city || '',
-        state: user.state || '',
-        postcode: user.postcode || '',
-        country: user.country || 'Bangladesh',
-        deliveryMethod: 'standard',
-        paymentMethod: 'cod',
-        promoCode: '',
-        note: '',
-        termsAccepted: false,
+const formSections = [
+    {
+        title: 'Contact details', sub: "We'll send order updates to these details.", gridClass: 'grid-2',
+        fields: [
+            { key: 'fullName', label: 'Full name', placeholder: 'Jane Doe', required: true },
+            { key: 'mobile', label: 'Mobile number', placeholder: '01712345678', required: true, inputmode: 'numeric', type: 'tel' },
+            { key: 'email', label: 'Email address', placeholder: 'you@example.com', type: 'email', wide: true }
+        ]
+    },
+    {
+        title: 'Shipping address', sub: 'Where should we deliver your order?', gridClass: 'grid-2',
+        fields: [
+            { key: 'addressLine1', label: 'Address line 1', placeholder: 'House, road, apartment', required: true, wide: true },
+            { key: 'addressLine2', label: 'Address line 2', placeholder: 'Area, landmark, floor', wide: true },
+            { key: 'city', label: 'City', placeholder: 'Dhaka', required: true },
+            { key: 'state', label: 'State / Division', placeholder: 'Dhaka Division' },
+            { key: 'postcode', label: 'Postcode', placeholder: '1205', required: true },
+            { key: 'country', label: 'Country', type: 'select', options: ['Bangladesh', 'India', 'United States', 'United Kingdom'] }
+        ]
     }
-
-    Object.assign(form, saved, draft)
-    promoCodeInput.value = draft.promoCode || draft.promo_code || ''
-    appliedPromo.value = getPromoCode(draft.promoCode || draft.promo_code || '')
-    if (appliedPromo.value) {
-        promoMessage.value = `Promo code ${appliedPromo.value.code} is applied.`
-    }
-}
-
-const syncPromoDraft = () => {
-    saveCheckoutDraft({
-        ...form,
-        promoCode: appliedPromo.value?.code || '',
-        promoDiscount: promoDiscount.value,
-        promoLabel: appliedPromo.value?.label || '',
-        promoDescription: appliedPromo.value?.description || '',
-    })
-}
+]
 
 const applyPromoCode = () => {
     const code = promoCodeInput.value.trim().toUpperCase()
-
     promoMessage.value = ''
     promoError.value = ''
-
-    if (!code) {
-        promoError.value = 'Please enter a promo code.'
-        return
-    }
-
+    if (!code) { promoError.value = 'Please enter a promo code.'; return }
     const promo = getPromoCode(code)
-    if (!promo) {
-        appliedPromo.value = null
-        promoError.value = 'Invalid promo code.'
-        syncPromoDraft()
-        return
-    }
-
+    if (!promo) { appliedPromo.value = null; promoError.value = 'Invalid promo code.'; return }
     if (promo.minSubtotal && subtotal.value < promo.minSubtotal) {
         appliedPromo.value = null
-        promoError.value = `This code needs a minimum order of ৳${formatMoney(promo.minSubtotal)}.`
-        syncPromoDraft()
+        promoError.value = `Minimum order ৳${formatMoney(promo.minSubtotal)} required.`
         return
     }
-
     appliedPromo.value = promo
-    promoMessage.value = `Promo code ${promo.code} applied successfully.`
-    promoError.value = ''
-    syncPromoDraft()
+    promoMessage.value = `Code ${promo.code} applied.`
 }
-
 const usePromoSuggestion = (code) => {
     promoCodeInput.value = code
     applyPromoCode()
 }
 
-const removePromoCode = () => {
-    promoCodeInput.value = ''
-    appliedPromo.value = null
-    promoMessage.value = ''
-    promoError.value = ''
-    syncPromoDraft()
+const buildShippingAddress = () => {
+    return [form.addressLine1, form.addressLine2, form.city, form.state, form.postcode, form.country]
+        .map(p => String(p || '').trim()).filter(Boolean).join(', ')
 }
 
 const placeOrder = async () => {
     errorMessage.value = ''
     successMessage.value = ''
-
-    if (!cartItems.value.length) {
-        errorMessage.value = 'Your cart is empty. Add items before placing an order.'
-        return
-    }
-
     if (!form.termsAccepted) {
-        errorMessage.value = 'Please accept the terms of service to continue.'
+        errorMessage.value = 'Please accept the terms of service.'
         return
     }
-
-    const requiredFields = [
+    const missing = [
         ['full name', form.fullName],
-        ['mobile number', form.mobile],
-        ['address line 1', form.addressLine1],
+        ['mobile', form.mobile],
+        ['address', form.addressLine1],
         ['city', form.city],
-        ['post code', form.postcode],
-    ]
-
-    const missing = requiredFields.find(([, value]) => !String(value || '').trim())
+        ['postcode', form.postcode]
+    ].find(([, v]) => !String(v || '').trim())
     if (missing) {
         errorMessage.value = `Please enter your ${missing[0]}.`
         return
     }
-
     submitting.value = true
-
     try {
-        const response = await api.post('checkout', {
+        const res = await api.post('checkout', {
             user_id: authStore.user?.id,
             customer_name: form.fullName.trim(),
             customer_email: form.email.trim(),
@@ -538,862 +350,784 @@ const placeOrder = async () => {
             payment_method: form.paymentMethod,
             promo_code: appliedPromo.value?.code || null,
             notes: String(form.note || '').trim(),
-            items: cartItems.value.map((item) => ({
-                product_id: item.id,
-                quantity: Number(item.quantity || 1),
-                name: item.name,
-                price: Number(item.price || 0),
-            })),
+            items: cartItems.value.map(i => ({
+                product_id: i.id,
+                quantity: Number(i.quantity || 1),
+                name: i.name,
+                price: Number(i.price || 0)
+            }))
         })
-
-        const orderPayload = response.data.order || response.data.data || response.data
-        const orderRef = orderPayload?.order_number || orderPayload?.id
-        const paymentUrl = response.data.payment_url || orderPayload?.payment_url || null
-
-        if (!orderRef) {
-            throw new Error('The backend did not return an order reference.')
-        }
-
+        const payload = res.data.order || res.data.data || res.data
+        const reference = payload?.order_number || payload?.id
+        if (!reference) throw new Error('No order reference received.')
         saveCheckoutDraft(null)
         cartStore.clearCart()
-
-        router.push({
-            path: '/order/success',
-            query: {
-                order: orderRef,
-                ...(paymentUrl ? { payment_url: paymentUrl } : {}),
-            },
-        })
-    } catch (error) {
-        console.error('Checkout error:', error)
-        errorMessage.value = error.response?.data?.message || 'Something went wrong while placing the order. Please try again.'
+        router.push({ path: '/order/success', query: { order: reference } })
+    } catch (e) {
+        errorMessage.value = e.response?.data?.message || 'Something went wrong. Please try again.'
     } finally {
         submitting.value = false
     }
 }
 
-watch(
-    form,
-    () => {
-        syncPromoDraft()
-    },
-    { deep: true },
-)
-
-watch(
-    () => subtotal.value,
-    () => {
-        if (appliedPromo.value) {
-            const promo = getPromoCode(appliedPromo.value.code)
-            if (!promo || (promo.minSubtotal && subtotal.value < promo.minSubtotal)) {
-                appliedPromo.value = null
-                promoMessage.value = ''
-                promoError.value = 'Promo code no longer meets the minimum order amount.'
-            }
-        }
-        syncPromoDraft()
-    },
-)
-
-watch(promoCodeInput, (value) => {
-    const normalized = String(value || '').trim().toUpperCase()
-
-    if (appliedPromo.value && normalized !== appliedPromo.value.code) {
-        appliedPromo.value = null
-        promoMessage.value = ''
-    }
-
-    if (!normalized) {
-        promoError.value = ''
-    }
-
-    syncPromoDraft()
-})
-
 onMounted(() => {
-    hydrateForm()
+    authStore.loadUser?.()
+    const user = authStore.user || {}
+    const draft = readCheckoutDraft() || {}
+    Object.assign(form, {
+        fullName: user.name || '',
+        mobile: normalizePhone(user.mobile || user.phone || ''),
+        email: user.email || '',
+        addressLine1: user.address_line1 || user.address || '',
+        city: user.city || '',
+        country: user.country || 'Bangladesh',
+        ...draft
+    })
+    promoCodeInput.value = draft.promoCode || ''
+    appliedPromo.value = getPromoCode(draft.promoCode || '')
+    if (appliedPromo.value) promoMessage.value = `Code ${appliedPromo.value.code} is applied.`
     cartStore.loadCart?.()
 })
+watch(form, () => {
+    saveCheckoutDraft({ ...form, promoCode: appliedPromo.value?.code || '' })
+}, { deep: true })
 </script>
 
 <style scoped>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=Sora:wght@500;600;700&display=swap');
+
+/* Light mode (default) */
 .checkout-page {
-    max-width: 1440px;
+    --bg-page: #F5F7FA;
+    --bg-card: #FFFFFF;
+    --bg-card-soft: #F8FAFC;
+    --text-primary: #1A2A3A;
+    --text-secondary: #5A6A7A;
+    --text-muted: #7A8A9A;
+    --border-light: #E8ECF0;
+    --border-input: #CCD4DC;
+    --accent: #0066FF;
+    --accent-soft: #F0F7FF;
+    --success: #10B981;
+    --danger: #EF4444;
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.02);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.04);
+}
+
+/* Dark mode – triggered by parent .dark class */
+.checkout-page.dark {
+    --bg-page: #0F1218;
+    --bg-card: #1A1E26;
+    --bg-card-soft: #2A2F3A;
+    --text-primary: #E8EDF2;
+    --text-secondary: #9AA8B8;
+    --text-muted: #6B7A8A;
+    --border-light: #2A2F3A;
+    --border-input: #3A4050;
+    --accent: #3B82F6;
+    --accent-soft: #1E2A3A;
+}
+
+.checkout-page {
+    max-width: 1400px;
     margin: 0 auto;
-    padding: 0 1rem 2rem;
+    padding: 0 2rem 4rem;
+    background: var(--bg-page);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    color: var(--text-primary);
 }
 
-.checkout-hero {
-    position: relative;
-    display: grid;
-    grid-template-columns: minmax(0, 1.6fr) minmax(280px, 0.8fr);
-    gap: 1.25rem;
-    margin-bottom: 1.5rem;
-    padding: 1.5rem;
-    border-radius: 1.75rem;
-    overflow: hidden;
-    background:
-        radial-gradient(circle at top right, rgba(59, 130, 246, 0.18), transparent 30%),
-        linear-gradient(135deg, rgba(15, 23, 42, 0.02), rgba(59, 130, 246, 0.06));
+/* Header */
+.page-header {
+    padding: 2rem 0 1.5rem;
+    border-bottom: 1px solid var(--border-light);
+    margin-bottom: 2rem;
 }
 
-.checkout-hero::before,
-.checkout-hero::after {
-    content: '';
-    position: absolute;
-    inset: auto;
-    border-radius: 999px;
-    filter: blur(18px);
-    pointer-events: none;
-}
-
-.checkout-hero::before {
-    width: 160px;
-    height: 160px;
-    top: -40px;
-    right: 8%;
-    background: rgba(59, 130, 246, 0.18);
-}
-
-.checkout-hero::after {
-    width: 220px;
-    height: 220px;
-    bottom: -120px;
-    left: 20%;
-    background: rgba(20, 184, 166, 0.16);
-}
-
-.hero-copy,
-.hero-summary {
-    position: relative;
-    z-index: 1;
-}
-
-.eyebrow {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 0.8rem;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
+.brand-mark {
+    font-family: 'Sora', sans-serif;
     font-weight: 700;
-    font-size: 0.8rem;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    font-size: 1.5rem;
+    letter-spacing: -0.02em;
+    background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 100%);
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+    display: inline-block;
+    margin-bottom: 1rem;
 }
 
-.hero-copy h1 {
-    margin: 1rem 0 0.75rem;
-    font-size: clamp(2rem, 3.8vw, 3.75rem);
-    line-height: 1.02;
-    letter-spacing: -0.04em;
-    color: var(--text);
-    max-width: 12ch;
+.page-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 2rem;
+    font-weight: 600;
+    margin: 0 0 0.25rem;
+    letter-spacing: -0.01em;
+    color: var(--text-primary);
 }
 
-.hero-copy p {
-    max-width: 60ch;
-    color: var(--text-muted);
-    font-size: 1rem;
-    line-height: 1.7;
+.page-sub {
+    font-size: 0.95rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
 }
 
-.hero-pills {
+.trust-badges {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.75rem;
-    margin-top: 1.25rem;
+    gap: 1rem;
 }
 
-.hero-pills span {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.55rem;
-    padding: 0.7rem 0.9rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: rgba(255, 255, 255, 0.65);
-    color: var(--text);
-    box-shadow: var(--shadow);
-}
-
-.hero-summary-card,
-.form-card,
-.summary-card,
-.empty-card {
-    background: var(--card);
-    border: 1px solid var(--border);
-    box-shadow: var(--shadow-lg);
-}
-
-.hero-summary-card {
-    border-radius: 1.4rem;
-    padding: 1rem;
-}
-
-.summary-row {
+.trust-badges span {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--text-muted);
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-    padding: 0.5rem 0;
-    color: var(--text);
+    gap: 0.35rem;
 }
 
-.summary-row.total {
-    font-size: 1.05rem;
-}
-
-.summary-divider {
-    height: 1px;
-    margin: 0.4rem 0;
-    background: var(--border);
-}
-
+/* Empty state */
 .empty-state {
-    display: grid;
-    place-items: center;
-    padding: 2rem 0;
-}
-
-.empty-card {
-    width: min(100%, 540px);
-    border-radius: 1.5rem;
-    padding: 2rem;
     text-align: center;
+    padding: 4rem 2rem;
+    background: var(--bg-card);
+    border-radius: 20px;
+    border: 1px solid var(--border-light);
 }
 
 .empty-icon {
-    width: 72px;
-    height: 72px;
-    margin: 0 auto 1rem;
-    display: grid;
-    place-items: center;
-    border-radius: 1.25rem;
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.16), rgba(20, 184, 166, 0.16));
-    color: var(--primary);
-    font-size: 1.7rem;
+    font-family: 'Sora', sans-serif;
+    font-size: 3rem;
+    color: var(--accent);
+    opacity: 0.5;
+    margin-bottom: 1rem;
 }
 
-.empty-card h2 {
-    font-size: 1.6rem;
+.empty-state h2 {
+    font-weight: 600;
+    font-size: 1.5rem;
     margin-bottom: 0.5rem;
+    color: var(--text-primary);
 }
 
-.empty-card p {
-    color: var(--text-muted);
-    margin-bottom: 1.25rem;
+.empty-state p {
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
 }
 
 .btn-primary {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    border: none;
-    border-radius: 999px;
-    padding: 0.9rem 1.4rem;
-    background: var(--primary);
-    color: #fff;
-    font-weight: 700;
+    display: inline-block;
+    background: var(--accent);
+    color: #FFFFFF;
     text-decoration: none;
+    padding: 0.75rem 1.8rem;
+    font-weight: 600;
+    font-size: 0.85rem;
+    letter-spacing: 0.03em;
+    border: none;
+    border-radius: 40px;
     cursor: pointer;
-    transition: transform 0.2s, background 0.2s, box-shadow 0.2s;
-    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.28);
+    transition: background 0.2s, transform 0.1s;
 }
 
 .btn-primary:hover {
-    background: var(--primary-hover);
+    background: #0052CC;
     transform: translateY(-1px);
 }
 
-.checkout-grid {
-    display: grid;
-    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.85fr);
-    gap: 1.5rem;
-    align-items: start;
+.btn-primary:active {
+    transform: translateY(0);
 }
 
+/* Layout */
+.checkout-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 2rem;
+}
+
+/* Form */
 .checkout-form {
-    display: grid;
-    gap: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
 }
 
-.form-card {
-    border-radius: 1.5rem;
-    padding: 1.25rem;
+.form-section {
+    padding: 1.8rem 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.form-section:last-of-type {
+    border-bottom: none;
 }
 
 .section-header {
     display: flex;
-    align-items: flex-start;
-    gap: 0.9rem;
-    margin-bottom: 1rem;
+    gap: 1.2rem;
+    margin-bottom: 1.5rem;
 }
 
-.section-kicker {
-    width: 2rem;
-    height: 2rem;
-    display: grid;
-    place-items: center;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
-    font-weight: 800;
-    flex: 0 0 auto;
+.section-number {
+    width: 2.2rem;
+    height: 2.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--border-input);
+    border-radius: 8px;
+    font-family: 'Sora', sans-serif;
+    font-weight: 600;
+    color: var(--accent);
+    background: var(--bg-card);
 }
 
-.section-header h2 {
-    margin: 0 0 0.2rem;
-    font-size: 1.15rem;
+.section-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.3rem;
+    color: var(--text-primary);
 }
 
-.section-header p {
+.section-subtitle {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
     margin: 0;
-    color: var(--text-muted);
-    font-size: 0.92rem;
-    line-height: 1.5;
 }
 
 .field-grid {
     display: grid;
-    gap: 1rem;
+    gap: 1.25rem;
 }
 
-.field-grid.two-up {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.field-grid.grid-2 {
+    grid-template-columns: 1fr 1fr;
 }
 
 .field {
-    display: grid;
-    gap: 0.45rem;
-}
-
-.field span {
-    font-size: 0.92rem;
-    font-weight: 600;
-    color: var(--text);
-}
-
-.field input,
-.field select,
-.field textarea {
-    width: 100%;
-    border: 1.5px solid var(--border);
-    border-radius: 1rem;
-    background: rgba(255, 255, 255, 0.72);
-    padding: 0.95rem 1rem;
-    color: var(--text);
-    transition: border-color 0.2s, box-shadow 0.2s, transform 0.2s;
-}
-
-.field textarea {
-    resize: vertical;
-    min-height: 120px;
-}
-
-.field input:focus,
-.field select:focus,
-.field textarea:focus {
-    outline: none;
-    border-color: var(--primary);
-    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
 }
 
 .field-wide {
     grid-column: 1 / -1;
 }
 
-.choice-grid {
-    display: grid;
+.field-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+}
+
+.field-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-input);
+    border-radius: 12px;
+    background: var(--bg-card);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.field-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+}
+
+textarea.field-input {
+    resize: vertical;
+}
+
+/* Option cards (delivery) */
+.option-group {
+    display: flex;
+    flex-direction: column;
     gap: 0.75rem;
+    margin-bottom: 1rem;
 }
 
-.payment-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-}
-
-.choice-card {
+.option-card {
     display: flex;
     align-items: center;
-    gap: 0.9rem;
+    gap: 1rem;
     width: 100%;
-    border: 1.5px solid var(--border);
-    border-radius: 1.1rem;
-    background: rgba(255, 255, 255, 0.7);
-    padding: 1rem;
+    padding: 1rem 1.2rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
     text-align: left;
-    color: var(--text);
     cursor: pointer;
-    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    transition: all 0.2s;
 }
 
-.choice-card:hover {
-    transform: translateY(-1px);
-    border-color: rgba(59, 130, 246, 0.3);
+.option-card:hover {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-sm);
 }
 
-.choice-card.active {
-    border-color: var(--primary);
-    box-shadow: 0 12px 28px rgba(59, 130, 246, 0.14);
-    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(20, 184, 166, 0.08));
+.option-card.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
-.choice-card i {
-    width: 2.8rem;
-    height: 2.8rem;
-    display: grid;
-    place-items: center;
-    border-radius: 0.9rem;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
-    font-size: 1.05rem;
-    flex: 0 0 auto;
+.option-icon {
+    font-size: 1.3rem;
 }
 
-.choice-copy {
+.option-info {
     flex: 1;
-    min-width: 0;
 }
 
-.choice-copy strong {
+.option-info strong {
     display: block;
-    font-size: 0.98rem;
+    font-size: 0.9rem;
     margin-bottom: 0.2rem;
+    color: var(--text-primary);
 }
 
-.choice-copy p {
+.option-info p {
     margin: 0;
-    color: var(--text-muted);
-    font-size: 0.86rem;
-    line-height: 1.45;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }
 
-.choice-price {
-    font-weight: 800;
-    color: var(--text);
+.option-price {
+    font-weight: 700;
+    color: var(--accent);
+    font-size: 0.9rem;
     white-space: nowrap;
 }
 
 .shipping-note {
-    margin-top: 0.85rem;
-    padding: 0.9rem 1rem;
-    border-radius: 1rem;
-    background: rgba(59, 130, 246, 0.08);
-    color: var(--text);
-    font-size: 0.92rem;
+    font-size: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: var(--bg-card-soft);
+    border-left: 3px solid var(--border-input);
 }
 
-.shipping-note.success {
-    background: rgba(16, 185, 129, 0.11);
-    color: #047857;
+.shipping-note.free-unlocked {
+    border-left-color: var(--accent);
+    background: var(--accent-soft);
 }
 
-.promo-row {
+/* Payment grid */
+.payment-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: repeat(3, 1fr);
     gap: 0.75rem;
-    align-items: end;
 }
 
-.promo-field {
-    margin: 0;
-}
-
-.promo-field input {
-    text-transform: uppercase;
-}
-
-.promo-btn,
-.promo-remove-btn {
-    border: none;
-    border-radius: 999px;
-    padding: 0.9rem 1.2rem;
-    font-weight: 700;
-    cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
-}
-
-.promo-btn {
-    background: linear-gradient(135deg, var(--primary), #0ea5e9);
-    color: white;
-    box-shadow: 0 14px 28px rgba(59, 130, 246, 0.2);
-}
-
-.promo-remove-btn {
-    background: rgba(239, 68, 68, 0.1);
-    color: #b91c1c;
-}
-
-.promo-btn:hover,
-.promo-remove-btn:hover {
-    transform: translateY(-1px);
-}
-
-.promo-success,
-.promo-error {
-    margin: 0.85rem 0 0;
-    padding: 0.85rem 1rem;
-    border-radius: 1rem;
+.payment-card {
     display: flex;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 0.55rem;
-    font-size: 0.92rem;
-    line-height: 1.5;
+    gap: 0.6rem;
+    padding: 1rem;
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: 16px;
+    cursor: pointer;
+    transition: all 0.2s;
 }
 
-.promo-success {
-    background: rgba(16, 185, 129, 0.11);
-    color: #047857;
+.payment-card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
 }
 
-.promo-error {
-    background: rgba(239, 68, 68, 0.12);
-    color: #b91c1c;
+.payment-card.active {
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
-.promo-suggestions {
+.payment-icon {
+    font-size: 1.3rem;
+}
+
+.payment-card strong {
+    display: block;
+    font-size: 0.85rem;
+    margin-bottom: 0.1rem;
+    color: var(--text-primary);
+}
+
+.payment-card p {
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+}
+
+/* Promo */
+.promo-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-end;
+}
+
+.promo-input-wrapper {
+    flex: 1;
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    border: 1px solid var(--border-input);
+    border-radius: 12px;
+    padding: 0 0.75rem;
+    background: var(--bg-card);
+    transition: border-color 0.2s;
+}
+
+.promo-input-wrapper:focus-within {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(0, 102, 255, 0.1);
+}
+
+.promo-icon {
+    font-size: 1rem;
+}
+
+.promo-input-wrapper .field-input {
+    border: none;
+    padding: 0.75rem 0;
+    flex: 1;
+    background: transparent;
+    box-shadow: none;
+}
+
+.btn-outline {
+    background: none;
+    border: 1px solid var(--border-input);
+    border-radius: 40px;
+    padding: 0.7rem 1.2rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-weight: 600;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    color: var(--text-primary);
+}
+
+.btn-outline:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.promo-message {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
+    margin-top: 0.75rem;
+    padding: 0.6rem 0.9rem;
+    border-radius: 12px;
+}
+
+.promo-message.success {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    color: var(--text-primary);
+}
+
+.promo-message.error {
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid var(--danger);
+    color: var(--danger);
+}
+
+.promo-chips {
     display: flex;
     flex-wrap: wrap;
-    gap: 0.65rem;
-    margin-top: 0.85rem;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
 }
 
 .promo-chip {
-    display: inline-grid;
-    gap: 0.15rem;
-    min-width: 135px;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid var(--border);
-    border-radius: 0.95rem;
-    background: var(--bg);
-    color: var(--text);
+    background: var(--bg-card-soft);
+    border: 1px solid var(--border-light);
+    border-radius: 30px;
+    padding: 0.4rem 0.9rem;
+    font-family: 'Plus Jakarta Sans', sans-serif;
     cursor: pointer;
-    text-align: left;
-    transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
+    transition: all 0.2s;
 }
 
 .promo-chip:hover {
-    transform: translateY(-1px);
-    border-color: rgba(59, 130, 246, 0.35);
-    box-shadow: var(--shadow);
+    border-color: var(--accent);
+    background: var(--accent-soft);
 }
 
 .promo-chip strong {
-    color: var(--primary);
-    font-size: 0.92rem;
+    display: block;
+    font-size: 0.75rem;
+    color: var(--accent);
 }
 
 .promo-chip span {
+    font-size: 0.7rem;
     color: var(--text-muted);
-    font-size: 0.82rem;
-    line-height: 1.35;
 }
 
-.promo-applied {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.8rem;
-    margin-top: 0.9rem;
-    padding: 0.95rem 1rem;
-    border-radius: 1rem;
-    background: rgba(59, 130, 246, 0.08);
-    border: 1px solid rgba(59, 130, 246, 0.16);
-}
-
-.promo-applied strong {
-    display: block;
-    color: var(--text);
-    margin-bottom: 0.1rem;
-}
-
-.promo-applied p {
-    margin: 0;
-    color: var(--text-muted);
-    font-size: 0.88rem;
-    line-height: 1.45;
-}
-
-.terms-row {
+/* Terms */
+.terms-checkbox {
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
-    padding: 0.25rem 0.1rem;
-    color: var(--text);
+    margin: 1.2rem 0 1.8rem;
+    cursor: pointer;
 }
 
-.terms-row input {
-    margin-top: 0.25rem;
+.terms-checkbox input {
+    margin-top: 0.15rem;
+    accent-color: var(--accent);
+    width: 1.1rem;
+    height: 1.1rem;
 }
 
+.terms-checkbox span {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+/* Alert messages */
 .alert {
     padding: 0.85rem 1rem;
-    border-radius: 1rem;
-    font-size: 0.92rem;
+    font-size: 0.85rem;
+    border-radius: 12px;
+    margin-bottom: 1rem;
 }
 
 .alert.error {
-    background: rgba(239, 68, 68, 0.12);
-    color: #b91c1c;
+    background: rgba(239, 68, 68, 0.1);
+    border-left: 3px solid var(--danger);
+    color: var(--danger);
 }
 
 .alert.success {
-    background: rgba(16, 185, 129, 0.12);
-    color: #047857;
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    color: var(--accent);
 }
 
-.place-order-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.6rem;
+.submit-btn {
     width: 100%;
-    border: none;
-    border-radius: 1.15rem;
-    padding: 1rem 1.25rem;
-    background: linear-gradient(135deg, var(--primary), #0ea5e9);
-    color: white;
-    font-size: 1rem;
-    font-weight: 800;
-    cursor: pointer;
-    box-shadow: 0 16px 34px rgba(59, 130, 246, 0.26);
-    transition: transform 0.2s, filter 0.2s, opacity 0.2s;
+    padding: 1rem;
+    font-size: 0.85rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    border-radius: 40px;
 }
 
-.place-order-btn:hover:not(:disabled) {
-    transform: translateY(-1px);
-    filter: brightness(1.02);
-}
-
-.place-order-btn:disabled {
-    opacity: 0.75;
-    cursor: not-allowed;
-}
-
-.summary-panel {
-    position: relative;
-}
-
-.summary-card {
-    border-radius: 1.5rem;
-    padding: 1.25rem;
-}
-
-.summary-card.sticky {
+/* Order summary sidebar */
+.order-summary {
     position: sticky;
-    top: 6rem;
+    top: 2rem;
+    align-self: start;
 }
 
-.summary-head {
+.summary-sticky {
+    background: var(--bg-card-soft);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-light);
+}
+
+.summary-header {
     display: flex;
-    align-items: flex-start;
     justify-content: space-between;
-    gap: 1rem;
-    margin-bottom: 1rem;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
 }
 
-.summary-kicker {
-    display: inline-flex;
-    margin-bottom: 0.35rem;
-    font-size: 0.78rem;
-    font-weight: 800;
-    letter-spacing: 0.08em;
+.summary-label {
+    font-size: 0.7rem;
+    font-weight: 600;
     text-transform: uppercase;
+    letter-spacing: 0.05em;
     color: var(--text-muted);
 }
 
-.summary-head h3 {
-    margin: 0;
-    font-size: 1.35rem;
+.summary-title {
+    font-family: 'Sora', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 600;
+    margin: 0.25rem 0 0;
+    color: var(--text-primary);
 }
 
-.summary-chip {
-    display: inline-flex;
-    align-items: center;
-    padding: 0.45rem 0.75rem;
-    border-radius: 999px;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
-    font-size: 0.82rem;
-    font-weight: 700;
-    white-space: nowrap;
+.delivery-badge {
+    font-size: 0.65rem;
+    padding: 0.3rem 0.8rem;
+    border: 1px solid var(--border-input);
+    border-radius: 30px;
+    background: var(--bg-card);
+    color: var(--text-primary);
 }
 
 .summary-items {
-    display: grid;
-    gap: 0.85rem;
-    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    max-height: 300px;
+    overflow-y: auto;
 }
 
 .summary-item {
     display: grid;
-    grid-template-columns: 52px minmax(0, 1fr) auto;
+    grid-template-columns: 50px 1fr auto;
     gap: 0.75rem;
     align-items: center;
 }
 
 .summary-item img {
-    width: 52px;
-    height: 52px;
+    width: 50px;
+    height: 64px;
     object-fit: cover;
-    border-radius: 0.9rem;
-    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--bg-card-soft);
 }
 
-.summary-item-copy {
-    min-width: 0;
+.item-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
 }
 
-.summary-item-copy strong {
-    display: block;
-    font-size: 0.92rem;
-    margin-bottom: 0.15rem;
+.item-details strong {
+    font-size: 0.85rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text-primary);
 }
 
-.summary-item-copy span {
-    font-size: 0.84rem;
+.item-details span {
+    font-size: 0.7rem;
     color: var(--text-muted);
 }
 
-.summary-item-total {
-    font-weight: 800;
+.item-total {
+    font-weight: 700;
+    font-size: 0.85rem;
     white-space: nowrap;
+    color: var(--text-primary);
 }
 
 .summary-lines {
-    display: grid;
-    gap: 0.65rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid var(--border);
-}
-
-.line {
     display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
-}
-
-.line span {
-    color: var(--text-muted);
-}
-
-.line.total {
-    padding-top: 0.2rem;
-    font-size: 1.06rem;
-}
-
-.summary-info {
-    display: grid;
-    gap: 0.85rem;
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid var(--border);
-}
-
-.info-row {
-    display: flex;
+    flex-direction: column;
     gap: 0.8rem;
+    border-top: 1px solid var(--border-light);
+    padding-top: 1rem;
+}
+
+.summary-line {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.summary-line.total {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--text-primary);
+}
+
+.summary-divider {
+    height: 1px;
+    background: var(--border-light);
+}
+
+.summary-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-top: 1.5rem;
+    border-top: 1px solid var(--border-light);
+    padding-top: 1rem;
+}
+
+.detail-row {
+    display: flex;
+    gap: 0.75rem;
     align-items: flex-start;
 }
 
-.info-row i {
-    width: 2rem;
-    height: 2rem;
-    display: grid;
-    place-items: center;
-    border-radius: 0.8rem;
-    background: rgba(59, 130, 246, 0.12);
-    color: var(--primary);
-    flex: 0 0 auto;
+.detail-icon {
+    font-size: 1rem;
 }
 
-.info-row strong {
+.detail-row strong {
     display: block;
+    font-size: 0.8rem;
     margin-bottom: 0.1rem;
+    color: var(--text-primary);
 }
 
-.info-row p {
+.detail-row p {
     margin: 0;
+    font-size: 0.7rem;
     color: var(--text-muted);
-    font-size: 0.88rem;
-    line-height: 1.45;
 }
 
-@media (max-width: 1100px) {
-    .checkout-hero,
-    .checkout-grid {
+/* Responsive */
+@media (max-width: 1000px) {
+    .checkout-layout {
         grid-template-columns: 1fr;
+        gap: 1.5rem;
     }
 
-    .summary-card.sticky {
+    .order-summary {
         position: static;
     }
 }
 
-@media (max-width: 820px) {
-    .hero-copy h1 {
-        max-width: none;
+@media (max-width: 700px) {
+    .checkout-page {
+        padding: 0 1rem 3rem;
     }
 
-    .field-grid.two-up,
+    .field-grid.grid-2 {
+        grid-template-columns: 1fr;
+    }
+
     .payment-grid {
         grid-template-columns: 1fr;
     }
+
+    .option-card {
+        flex-wrap: wrap;
+    }
 }
 
-@media (max-width: 640px) {
-    .checkout-page {
-        padding: 0 0.75rem 1.5rem;
-    }
-
-    .checkout-hero,
-    .form-card,
-    .summary-card,
-    .empty-card {
-        border-radius: 1.25rem;
-    }
-
-    .hero-copy h1 {
-        font-size: 2rem;
-    }
-
-    .hero-pills {
+@media (max-width: 480px) {
+    .promo-row {
         flex-direction: column;
     }
 
-    .choice-card {
-        align-items: flex-start;
-        flex-direction: column;
-    }
-
-    .choice-price {
-        align-self: flex-end;
+    .btn-outline {
+        width: 100%;
     }
 
     .summary-item {
-        grid-template-columns: 48px minmax(0, 1fr);
+        grid-template-columns: 40px 1fr auto;
     }
 
-    .summary-item-total {
-        grid-column: 2 / -1;
-        margin-left: auto;
-    }
-
-    .promo-row,
-    .promo-applied {
-        grid-template-columns: 1fr;
-        display: grid;
-    }
-
-    .promo-btn,
-    .promo-remove-btn {
-        width: 100%;
+    .summary-item img {
+        width: 40px;
+        height: 52px;
     }
 }
 </style>
